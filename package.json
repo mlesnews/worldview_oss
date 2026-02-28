@@ -1,0 +1,36 @@
+{
+  "name": "worldview_oss",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "postinstall": "node scripts/copy-cesium.mjs",
+    "predev": "node scripts/copy-cesium.mjs",
+    "prebuild": "node scripts/copy-cesium.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@next/swc-linux-x64-gnu": "^16.1.6",
+    "cesium": "^1.138.0",
+    "csstype": "^3.2.3",
+    "next": "16.1.6",
+    "onnxruntime-web": "^1.24.2",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "resium": "^1.19.4",
+    "satellite.js": "^6.0.2",
+    "zustand": "^5.0.11"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.7",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4.0.7",
+    "typescript": "^5"
+  }
+}
