@@ -7,10 +7,12 @@ import BottomBar from "@/components/hud/BottomBar";
 import InfoPanel from "@/components/hud/InfoPanel";
 import ViewModeFilter, { FlirFilterDefs } from "@/components/effects/ViewModeFilter";
 import CameraModal from "@/components/ui/Modal";
+import MediaModal from "@/components/ui/MediaModal";
 import SearchBar from "@/components/hud/SearchBar";
 import LandmarkNav from "@/components/hud/LandmarkNav";
 import CameraList from "@/components/hud/CameraList";
 import ScopeOverlay from "@/components/hud/ScopeOverlay";
+import DataFeed from "@/components/hud/DataFeed";
 
 // CesiumJS must be loaded client-side only (no SSR)
 const Globe = dynamic(() => import("@/components/Globe"), {
@@ -70,6 +72,7 @@ export default function Dashboard() {
         {/* RIGHT PANEL - Data Display */}
         <div className="w-[280px] flex-shrink-0 bg-[#000a00] border-l border-green-900/20 flex flex-col overflow-y-auto overflow-x-hidden z-10 panel-right">
           <InfoPanel />
+          <DataFeed />
         </div>
       </div>
 
@@ -85,6 +88,9 @@ export default function Dashboard() {
 
       {/* Camera Feed Modal */}
       <CameraModal />
+
+      {/* YouTube Live Stream Modal */}
+      <MediaModal />
     </div>
   );
 }

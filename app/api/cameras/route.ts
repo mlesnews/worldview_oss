@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getCameras } from "@/lib/api/cameras";
+import { getAllCameras } from "@/lib/api/cameras";
 
 export async function GET() {
-  return NextResponse.json(getCameras());
+  const cameras = await getAllCameras();
+  return NextResponse.json(cameras);
 }

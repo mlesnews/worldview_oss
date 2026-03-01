@@ -17,6 +17,19 @@ const LANDMARKS = [
 
 export default function LandmarkNav() {
   const flyTo = useWorldViewStore((s) => s.flyTo);
+  const setViewport = useWorldViewStore((s) => s.setViewport);
+
+  const navigate = (lon: number, lat: number) => {
+    const alt = 500_000;
+    flyTo(lon, lat, alt);
+    setViewport({
+      centerLat: lat,
+      centerLon: lon,
+      altitude: alt,
+      radiusKm: Math.min((alt * 2.5) / 1000, 20000),
+      isZoomedIn: alt < 1_000_000,
+    });
+  };
 
   return (
     <div className="panel-section">
@@ -25,7 +38,7 @@ export default function LandmarkNav() {
         {LANDMARKS.map((lm) => (
           <button
             key={lm.label}
-            onClick={() => flyTo(lm.lon, lm.lat, 500_000)}
+            onClick={() => navigate(lm.lon, lm.lat)}
             className="px-2 py-1 font-mono text-[9px] tracking-wider text-green-700/50
               hover:text-green-400 hover:bg-green-900/20 transition-colors cursor-pointer
               border border-green-900/20 rounded-sm text-center"

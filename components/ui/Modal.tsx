@@ -1,12 +1,11 @@
 "use client";
 
 import { useWorldViewStore } from "@/stores/worldview-store";
-import { AUSTIN_CAMERAS } from "@/lib/api/cameras";
 import { useEffect, useState, useRef } from "react";
 
 export default function CameraModal() {
   const isOpen = useWorldViewStore((s) => s.cameraModalOpen);
-  const activeCameraId = useWorldViewStore((s) => s.activeCameraId);
+  const camera = useWorldViewStore((s) => s.activeCamera);
   const close = useWorldViewStore((s) => s.closeCameraModal);
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -14,8 +13,6 @@ export default function CameraModal() {
     { class: string; confidence: number; bbox: number[] }[]
   >([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const camera = AUSTIN_CAMERAS.find((c) => c.id === activeCameraId);
 
   // Refresh image periodically via proxy
   useEffect(() => {
@@ -214,7 +211,14 @@ export default function CameraModal() {
             {camera.longitude.toFixed(4)}
           </span>
           <span className="text-[9px] font-mono text-green-700/50">
-            SRC: AUSTIN MOBILITY CCTV
+            SRC: {camera.id.startsWith("cal-") ? "CALTRANS CCTV" :
+                  camera.id.startsWith("nyc-") ? "NYC DOT" :
+                  camera.id.startsWith("uk-") ? "UK HIGHWAYS" :
+                  camera.id.startsWith("hk-") ? "HK TRANSPORT" :
+                  camera.id.startsWith("me-") || camera.id.startsWith("eu-") || camera.id.startsWith("intl-")
+                    ? "SKYLINE WEBCAMS" :
+                  camera.city === "Austin" ? "AUSTIN MOBILITY" :
+                  camera.city.toUpperCase() + " DOT"}
           </span>
         </div>
       </div>

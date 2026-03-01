@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AUSTIN_CAMERAS } from "@/lib/api/cameras";
+import { findCameraById } from "@/lib/api/cameras";
 
 export async function GET(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("id");
@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing camera id" }, { status: 400 });
   }
 
-  const camera = AUSTIN_CAMERAS.find((c) => c.id === id);
+  const camera = await findCameraById(id);
   if (!camera) {
     return NextResponse.json({ error: "Camera not found" }, { status: 404 });
   }
@@ -26,9 +26,10 @@ export async function GET(request: NextRequest) {
     }
 
     const buffer = await res.arrayBuffer();
+    const contentType = res.headers.get("Content-Type") || "image/jpeg";
     return new NextResponse(buffer, {
       headers: {
-        "Content-Type": "image/jpeg",
+        "Content-Type": contentType,
         "Cache-Control": "no-cache, no-store, must-revalidate",
       },
     });

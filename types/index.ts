@@ -1,14 +1,18 @@
 export type ViewMode = 'eo' | 'flir' | 'nightvision' | 'crt';
 
-export type LayerKey = 'flights' | 'satellites' | 'earthquakes' | 'asteroids' | 'weather' | 'cameras';
+export type MapStyle = 'dark' | 'terrain' | 'city';
+
+export type LayerKey = 'flights' | 'satellites' | 'disasters' | 'asteroids' | 'weather' | 'cameras' | 'livestreams' | 'news';
 
 export interface LayerState {
   flights: boolean;
   satellites: boolean;
-  earthquakes: boolean;
+  disasters: boolean;
   asteroids: boolean;
   weather: boolean;
   cameras: boolean;
+  livestreams: boolean;
+  news: boolean;
 }
 
 export interface CursorPosition {
@@ -19,7 +23,7 @@ export interface CursorPosition {
 
 export interface EntityInfo {
   id: string;
-  type: 'flight' | 'satellite' | 'earthquake' | 'asteroid' | 'camera';
+  type: 'flight' | 'satellite' | 'earthquake' | 'asteroid' | 'camera' | 'disaster' | 'livestream' | 'news';
   name: string;
   details: Record<string, string | number>;
   lon: number;
@@ -27,7 +31,7 @@ export interface EntityInfo {
   alt?: number;
 }
 
-// Flight data from OpenSky Network
+// Flight data (ADS-B Exchange via airplanes.live)
 export interface Flight {
   icao24: string;
   callsign: string;
@@ -93,9 +97,65 @@ export interface Camera {
   active: boolean;
 }
 
+// Clustered city group for progressive camera rendering
+export interface CityCluster {
+  city: string;
+  centerLat: number;
+  centerLon: number;
+  count: number;
+  cameras: Camera[];
+}
+
 // Detection result from YOLO
 export interface Detection {
   class: string;
   confidence: number;
   bbox: [number, number, number, number]; // x, y, w, h
+}
+
+// Flight sub-type filters
+export type FlightCategory = 'regular' | 'iss';
+
+// Disaster categories for sub-filtering
+export type DisasterCategory = 'earthquakes' | 'wildfires' | 'volcanoes' | 'severeStorms' | 'floods' | 'ice';
+
+// Unified disaster event (EONET + USGS merged)
+export interface Disaster {
+  id: string;
+  title: string;
+  category: DisasterCategory;
+  latitude: number;
+  longitude: number;
+  date: string; // ISO date
+  source: 'eonet' | 'usgs';
+  magnitude?: number;
+  description?: string;
+  link?: string;
+}
+
+// YouTube live stream
+export interface LiveStream {
+  id: string;
+  title: string;
+  channelTitle: string;
+  videoId: string;
+  latitude: number;
+  longitude: number;
+  thumbnailUrl: string;
+  viewerCount?: number;
+  city: string;
+}
+
+// Geo-tagged news article (GDELT)
+export interface NewsArticle {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  latitude: number;
+  longitude: number;
+  date: string;
+  language: string;
+  tone: number; // GDELT tone score
+  imageUrl?: string;
 }

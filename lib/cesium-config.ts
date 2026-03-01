@@ -4,8 +4,13 @@ export function initCesium() {
   // Point to our copied static assets
   (window as unknown as Record<string, unknown>).CESIUM_BASE_URL = "/cesium";
 
-  // Disable Cesium Ion (we're using free OSM tiles)
-  Cesium.Ion.defaultAccessToken = undefined as unknown as string;
+  // Set Ion token if available (needed for terrain/city map styles)
+  const ionToken = process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
+  if (ionToken) {
+    Cesium.Ion.defaultAccessToken = ionToken;
+  } else {
+    Cesium.Ion.defaultAccessToken = undefined as unknown as string;
+  }
 }
 
 /** Dark-themed OpenStreetMap tile provider */
@@ -26,6 +31,39 @@ export function createTonerImageryProvider(): Cesium.UrlTemplateImageryProvider 
     minimumLevel: 0,
     maximumLevel: 18,
   });
+}
+
+/** Check if Cesium Ion token is available */
+export function hasIonToken(): boolean {
+  return !!process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN;
+}
+
+/** Satellite aerial imagery via Cesium Ion (requires token) */
+export async function createSatelliteImageryProvider(): Promise<Cesium.IonImageryProvider> {
+  return Cesium.IonImageryProvider.fromAssetId(2); // Bing Maps Aerial
+}
+
+/** Cesium World Terrain (requires Ion token) */
+export async function createWorldTerrain(): Promise<Cesium.CesiumTerrainProvider> {
+  return Cesium.CesiumTerrainProvider.fromIonAssetId(1, {
+    requestVertexNormals: true,
+    requestWaterMask: true,
+  });
+}
+
+/** Dark labels overlay (country names, roads, etc.) — transparent background */
+export function createLabelsOverlayProvider(): Cesium.UrlTemplateImageryProvider {
+  return new Cesium.UrlTemplateImageryProvider({
+    url: "https://basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}.png",
+    credit: new Cesium.Credit("CartoDB Labels"),
+    minimumLevel: 0,
+    maximumLevel: 18,
+  });
+}
+
+/** OSM 3D Buildings tileset (requires Ion token) */
+export async function createOsmBuildings(): Promise<Cesium.Cesium3DTileset> {
+  return Cesium.Cesium3DTileset.fromIonAssetId(96188);
 }
 
 /** Default viewer options for our intelligence look */
