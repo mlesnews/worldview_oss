@@ -44,3 +44,6 @@ yarn-error.log*
 next-env.d.ts
 .playwright-mcp/*
 screenshot-*.png
+
+# GKG ingestion cache
+data/gkg-cache/

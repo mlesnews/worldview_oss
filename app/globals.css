@@ -339,3 +339,176 @@ body {
   margin-bottom: 6px;
   text-transform: uppercase;
 }
+
+/* ========================================
+   TIMELINE BAR
+   ======================================== */
+
+.timeline-bar {
+  display: flex;
+  align-items: center;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 6px 12px;
+  gap: 8px;
+  font-family: monospace;
+}
+
+/* Calendar icon button */
+.timeline-cal-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  border-radius: 3px;
+  background: rgba(0, 10, 0, 0.6);
+  color: #00ff41;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.timeline-cal-btn:hover {
+  border-color: rgba(0, 255, 65, 0.6);
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.2);
+}
+
+/* Range slider */
+.timeline-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: rgba(0, 255, 65, 0.2);
+  outline: none;
+  cursor: pointer;
+}
+
+.timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 16px;
+  background: #00ff41;
+  border: 1px solid rgba(0, 200, 50, 0.8);
+  border-radius: 2px;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(0, 255, 65, 0.4);
+}
+
+.timeline-slider::-moz-range-thumb {
+  width: 10px;
+  height: 16px;
+  background: #00ff41;
+  border: 1px solid rgba(0, 200, 50, 0.8);
+  border-radius: 2px;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(0, 255, 65, 0.4);
+}
+
+/* Calendar popup */
+.calendar-popup {
+  position: absolute;
+  bottom: 32px;
+  left: 0;
+  background: rgba(0, 10, 0, 0.95);
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  border-radius: 4px;
+  padding: 8px;
+  z-index: 50;
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+  font-family: monospace;
+}
+
+.calendar-nav-btn {
+  background: none;
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  color: #00ff41;
+  font-family: monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.calendar-nav-btn:hover {
+  border-color: rgba(0, 255, 65, 0.5);
+  background: rgba(0, 255, 65, 0.05);
+}
+
+.calendar-day {
+  width: 28px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: rgba(0, 255, 65, 0.5);
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: none;
+  font-family: monospace;
+}
+
+.calendar-day:hover {
+  border-color: rgba(0, 255, 65, 0.3);
+  color: #00ff41;
+}
+
+.calendar-day-active {
+  border-color: rgba(0, 255, 65, 0.6);
+  color: #00ff41;
+  background: rgba(0, 255, 65, 0.1);
+  box-shadow: 0 0 6px rgba(0, 255, 65, 0.2);
+}
+
+.calendar-day-today {
+  color: #00ff41;
+  font-weight: bold;
+}
+
+/* LIVE button */
+.timeline-live-btn {
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  border-radius: 3px;
+  background: rgba(0, 10, 0, 0.6);
+  color: rgba(0, 255, 65, 0.5);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.timeline-live-btn:hover {
+  border-color: rgba(0, 255, 65, 0.6);
+  color: #00ff41;
+}
+
+.timeline-live-btn-active {
+  border-color: rgba(0, 255, 65, 0.8);
+  color: #00ff41;
+  background: rgba(0, 255, 65, 0.1);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(0, 255, 65, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(0, 255, 65, 0.4);
+  }
+}
+
+/* Historical mode indicator */
+.timeline-historical-indicator {
+  color: #d4a017;
+  text-shadow: 0 0 8px rgba(212, 160, 23, 0.3);
+}

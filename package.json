@@ -9,12 +9,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "init-schema": "npx tsx scripts/init-graph-schema.ts",
+    "ingest-gkg": "npx tsx scripts/ingest-gkg.ts --daily",
+    "ingest-gkg-backfill": "npx tsx scripts/ingest-gkg.ts --backfill"
   },
   "dependencies": {
     "@next/swc-linux-x64-gnu": "^16.1.6",
+    "adm-zip": "^0.5.16",
     "cesium": "^1.138.0",
     "csstype": "^3.2.3",
+    "duck-duck-scrape": "^2.2.7",
+    "gremlin": "^3.8.0",
     "next": "16.1.6",
     "onnxruntime-web": "^1.24.2",
     "react": "19.2.3",
@@ -26,6 +32,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.7",
+    "@types/adm-zip": "^0.5.7",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

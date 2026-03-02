@@ -65,11 +65,22 @@ interface WorldViewStore {
   viewer: Cesium.Viewer | null;
   setViewer: (viewer: Cesium.Viewer | null) => void;
   flyTo: (lon: number, lat: number, alt?: number) => void;
+
+  // Timeline / simulation time
+  simulationDate: Date;
+  simulationHour: number;
+  simulationMinute: number;
+  calendarOpen: boolean;
+  isLive: boolean;
+  setSimulationDate: (date: Date) => void;
+  setSimulationTime: (hour: number, minute: number) => void;
+  setCalendarOpen: (open: boolean) => void;
+  resetToLive: () => void;
 }
 
 export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
   layers: {
-    flights: true,
+    flights: false,
     satellites: false,
     disasters: false,
     asteroids: false,
@@ -172,6 +183,64 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
       },
       duration: 1.5,
     });
+  },
+
+  // Timeline / simulation time
+  simulationDate: new Date(),
+  simulationHour: new Date().getUTCHours(),
+  simulationMinute: new Date().getUTCMinutes(),
+  calendarOpen: false,
+  isLive: true,
+
+  setSimulationDate: (date) => {
+    const { viewer } = get();
+    set({
+      simulationDate: date,
+      isLive: false,
+    });
+    // Sync CesiumJS clock
+    if (viewer && !viewer.isDestroyed()) {
+      const { simulationHour, simulationMinute } = get();
+      const d = new Date(date);
+      d.setUTCHours(simulationHour, simulationMinute, 0, 0);
+      viewer.clock.currentTime = Cesium.JulianDate.fromDate(d);
+      viewer.clock.shouldAnimate = false;
+    }
+  },
+
+  setSimulationTime: (hour, minute) => {
+    const { viewer, simulationDate } = get();
+    set({
+      simulationHour: hour,
+      simulationMinute: minute,
+      isLive: false,
+    });
+    // Sync CesiumJS clock
+    if (viewer && !viewer.isDestroyed()) {
+      const d = new Date(simulationDate);
+      d.setUTCHours(hour, minute, 0, 0);
+      viewer.clock.currentTime = Cesium.JulianDate.fromDate(d);
+      viewer.clock.shouldAnimate = false;
+    }
+  },
+
+  setCalendarOpen: (open) => set({ calendarOpen: open }),
+
+  resetToLive: () => {
+    const { viewer } = get();
+    const now = new Date();
+    set({
+      simulationDate: now,
+      simulationHour: now.getUTCHours(),
+      simulationMinute: now.getUTCMinutes(),
+      isLive: true,
+      calendarOpen: false,
+    });
+    // Resume CesiumJS clock
+    if (viewer && !viewer.isDestroyed()) {
+      viewer.clock.currentTime = Cesium.JulianDate.fromDate(now);
+      viewer.clock.shouldAnimate = true;
+    }
   },
 }));
 

@@ -1,30 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchGlobalNews, fetchLocalNews } from "@/lib/api/gdelt";
+import { getArticlesByDateRange, getArticlesByLocation } from "@/lib/graph/queries";
 import { fetchRssNews } from "@/lib/api/rss-news";
 import { fetchRedditIntel } from "@/lib/api/reddit";
+import { NEWS_CACHE_TTL_MS, MAX_LOCATION_CACHE_ENTRIES } from "@/lib/constants";
 import type { NewsArticle } from "@/types";
 
-// Server-side cache for global news (GDELT + RSS + Reddit merged)
+// Server-side cache for global news (graph + RSS + Reddit merged)
 let cachedGlobalNews: NewsArticle[] = [];
 let lastGlobalFetch = 0;
-const GLOBAL_CACHE_TTL = 900_000; // 15 min
 
 // Location-specific cache
 const locationCache = new Map<string, { articles: NewsArticle[]; time: number }>();
-const LOCATION_CACHE_TTL = 900_000; // 15 min
-const MAX_LOCATION_CACHE = 20;
+
+/**
+ * Fetch recent articles from JanusGraph (last 4 hours).
+ * Falls back to empty array if graph is unavailable.
+ */
+async function fetchGraphNews(): Promise<NewsArticle[]> {
+  try {
+    const now = Date.now();
+    const fourHoursAgo = now - 4 * 60 * 60 * 1000;
+    return await getArticlesByDateRange(fourHoursAgo, now, 100);
+  } catch {
+    // Graph unavailable (not running, connection refused, etc.)
+    return [];
+  }
+}
+
+/**
+ * Fetch location-scoped articles from JanusGraph.
+ */
+async function fetchGraphLocalNews(
+  lat: number,
+  lon: number,
+  radiusKm: number
+): Promise<NewsArticle[]> {
+  try {
+    const now = Date.now();
+    const fourHoursAgo = now - 4 * 60 * 60 * 1000;
+    return await getArticlesByLocation(lat, lon, radiusKm, fourHoursAgo, now, 50);
+  } catch {
+    return [];
+  }
+}
 
 /** Fetch all global sources in parallel and merge */
 async function fetchAllGlobalNews(): Promise<NewsArticle[]> {
-  const [gdeltResult, rssResult, redditResult] = await Promise.allSettled([
-    fetchGlobalNews(),
+  const [graphResult, rssResult, redditResult] = await Promise.allSettled([
+    fetchGraphNews(),
     fetchRssNews(),
     fetchRedditIntel(),
   ]);
 
   const articles: NewsArticle[] = [];
 
-  if (gdeltResult.status === "fulfilled") articles.push(...gdeltResult.value);
+  if (graphResult.status === "fulfilled") articles.push(...graphResult.value);
   if (rssResult.status === "fulfilled") articles.push(...rssResult.value);
   if (redditResult.status === "fulfilled") articles.push(...redditResult.value);
 
@@ -49,7 +79,7 @@ function refreshGlobalInBackground() {
 
 /** Background-refresh local news for a cache key */
 function refreshLocalInBackground(lat: number, lon: number, radiusKm: number, cacheKey: string) {
-  fetchLocalNews(lat, lon, radiusKm).then((fresh) => {
+  fetchGraphLocalNews(lat, lon, radiusKm).then((fresh) => {
     locationCache.set(cacheKey, { articles: fresh, time: Date.now() });
   }).catch(() => {});
 }
@@ -62,7 +92,7 @@ export async function GET(request: NextRequest) {
     const radius = searchParams.get("radius");
 
     const now = Date.now();
-    const globalExpired = now - lastGlobalFetch >= GLOBAL_CACHE_TTL;
+    const globalExpired = now - lastGlobalFetch >= NEWS_CACHE_TTL_MS;
 
     // Stale-while-revalidate for global news
     if (cachedGlobalNews.length === 0) {
@@ -92,20 +122,18 @@ export async function GET(request: NextRequest) {
 
     let localArticles: NewsArticle[] = [];
     const cached = locationCache.get(cacheKey);
-    const localExpired = !cached || now - cached.time >= LOCATION_CACHE_TTL;
+    const localExpired = !cached || now - cached.time >= NEWS_CACHE_TTL_MS;
 
     if (cached) {
       localArticles = cached.articles;
       if (localExpired) {
-        // Stale: return stale, refresh in background
         refreshLocalInBackground(parsedLat, parsedLon, radius ? parseFloat(radius) : 250, cacheKey);
       }
     } else {
-      // Cold start for this location: fetch local (global already handled above)
-      localArticles = await fetchLocalNews(parsedLat, parsedLon, radius ? parseFloat(radius) : 250);
+      localArticles = await fetchGraphLocalNews(parsedLat, parsedLon, radius ? parseFloat(radius) : 250);
 
       // Evict oldest if cache full
-      if (locationCache.size >= MAX_LOCATION_CACHE) {
+      if (locationCache.size >= MAX_LOCATION_CACHE_ENTRIES) {
         let oldestKey = "";
         let oldestTime = Infinity;
         for (const [k, v] of locationCache) {
@@ -127,7 +155,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json([...cachedGlobalNews, ...uniqueLocal]);
   } catch (error) {
     console.error("News API error:", error);
-    // Return cached data on error rather than empty
     return NextResponse.json(cachedGlobalNews.length > 0 ? cachedGlobalNews : [], { status: cachedGlobalNews.length > 0 ? 200 : 500 });
   }
 }

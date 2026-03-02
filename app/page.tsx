@@ -13,6 +13,7 @@ import LandmarkNav from "@/components/hud/LandmarkNav";
 import CameraList from "@/components/hud/CameraList";
 import ScopeOverlay from "@/components/hud/ScopeOverlay";
 import DataFeed from "@/components/hud/DataFeed";
+import TimelineSlider from "@/components/hud/TimelineSlider";
 
 // CesiumJS must be loaded client-side only (no SSR)
 const Globe = dynamic(() => import("@/components/Globe"), {
@@ -58,8 +59,8 @@ export default function Dashboard() {
           <BottomBar />
         </div>
 
-        {/* CENTER - Globe in circular viewport */}
-        <div className="flex-1 flex items-center justify-center bg-[#000a00] relative min-w-0">
+        {/* CENTER - Globe in circular viewport + timeline */}
+        <div className="flex-1 flex flex-col items-center justify-center bg-[#000a00] relative min-w-0">
           <div className="scope-container">
             <div className="scope-viewport">
               <Globe />
@@ -67,6 +68,7 @@ export default function Dashboard() {
             </div>
             <ScopeOverlay />
           </div>
+          <TimelineSlider />
         </div>
 
         {/* RIGHT PANEL - Data Display */}
