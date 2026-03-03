@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import type { MissionAgentStatus, MissionLogLevel, MissionPhase, AgentResult } from "./types";
+import type { MissionAgentStatus, MissionLogLevel, MissionPhase, AgentResult, AgentIntelItem } from "./types";
 
 // ── Event types ──────────────────────────────────────────────────
 
@@ -26,7 +26,27 @@ export interface MissionPhaseEvent {
   phase: MissionPhase;
 }
 
-export type MissionEvent = MissionLogEvent | MissionAgentStatusEvent | MissionPhaseEvent;
+export interface ChatTokenEvent {
+  type: "chat_token";
+  messageId: string;
+  token: string;
+  done: boolean;
+}
+
+export interface ChatActionEvent {
+  type: "chat_action";
+  messageId: string;
+  action: "dispatching" | "completed" | "failed";
+  agentId: string;
+  results?: AgentIntelItem[];
+}
+
+export type MissionEvent =
+  | MissionLogEvent
+  | MissionAgentStatusEvent
+  | MissionPhaseEvent
+  | ChatTokenEvent
+  | ChatActionEvent;
 
 /**
  * Global singleton EventEmitter bridging mission executor → SSE endpoint.
@@ -90,6 +110,31 @@ export function emitPhase(missionId: string, phase: MissionPhase): void {
     type: "phase",
     missionId,
     phase,
+  };
+  missionEmitter.emit("mission", event);
+}
+
+export function emitChatToken(
+  messageId: string,
+  token: string,
+  done: boolean
+): void {
+  const event: ChatTokenEvent = { type: "chat_token", messageId, token, done };
+  missionEmitter.emit("mission", event);
+}
+
+export function emitChatAction(
+  messageId: string,
+  action: ChatActionEvent["action"],
+  agentId: string,
+  results?: AgentIntelItem[]
+): void {
+  const event: ChatActionEvent = {
+    type: "chat_action",
+    messageId,
+    action,
+    agentId,
+    results,
   };
   missionEmitter.emit("mission", event);
 }

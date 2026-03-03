@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Cesium from 'cesium';
-import type { ViewMode, MapStyle, LayerState, LayerKey, CursorPosition, EntityInfo, Camera, FlightCategory, DisasterCategory, MilitaryCategory, NewsArticle, LiveStream, Disaster, Flight, MilitaryAction, AgentSwarmState, MissionControlState, MissionPhaseClient, MissionAgentClientState, MissionLogClientEntry, AgentIntelItemClient, DeploymentAreaClient } from '@/types';
+import type { ViewMode, MapStyle, LayerState, LayerKey, CursorPosition, EntityInfo, Camera, FlightCategory, DisasterCategory, MilitaryCategory, NewsArticle, LiveStream, Disaster, Flight, MilitaryAction, AgentSwarmState, MissionControlState, MissionPhaseClient, MissionAgentClientState, MissionLogClientEntry, AgentIntelItemClient, DeploymentAreaClient, ChatMessageClient } from '@/types';
 
 export interface Viewport {
   centerLat: number;
@@ -102,6 +102,14 @@ interface WorldViewStore {
   setMissionResults: (results: AgentIntelItemClient[]) => void;
   clearMission: () => void;
   setMissionOllamaStatus: (connected: boolean, model: string | null) => void;
+  // Specialist chat
+  addChatMessage: (msg: ChatMessageClient) => void;
+  updateChatMessage: (id: string, update: Partial<ChatMessageClient>) => void;
+  setChatActive: (active: boolean) => void;
+  setChatGenerating: (generating: boolean) => void;
+  clearChat: () => void;
+  // Reposition mode
+  setRepositionMode: (on: boolean) => void;
 }
 
 export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
@@ -310,6 +318,10 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
     missionResults: [],
     ollamaConnected: false,
     modelName: null,
+    chatMessages: [],
+    chatActive: false,
+    chatGenerating: false,
+    repositionMode: false,
   },
 
   setDeploymentMode: (on) =>
@@ -383,6 +395,8 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
         agentStates: [],
         missionLogs: [],
         missionResults: [],
+        chatMessages: [],
+        chatGenerating: false,
       },
     })),
 
@@ -393,6 +407,55 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
         ollamaConnected: connected,
         modelName: model,
       },
+    })),
+
+  // Specialist chat
+  addChatMessage: (msg) =>
+    set((state) => {
+      if (state.missionControl.chatMessages.some((m) => m.id === msg.id)) {
+        return state;
+      }
+      return {
+        missionControl: {
+          ...state.missionControl,
+          chatMessages: [...state.missionControl.chatMessages, msg],
+        },
+      };
+    }),
+
+  updateChatMessage: (id, update) =>
+    set((state) => ({
+      missionControl: {
+        ...state.missionControl,
+        chatMessages: state.missionControl.chatMessages.map((m) =>
+          m.id === id ? { ...m, ...update } : m
+        ),
+      },
+    })),
+
+  setChatActive: (active) =>
+    set((state) => ({
+      missionControl: { ...state.missionControl, chatActive: active },
+    })),
+
+  setChatGenerating: (generating) =>
+    set((state) => ({
+      missionControl: { ...state.missionControl, chatGenerating: generating },
+    })),
+
+  clearChat: () =>
+    set((state) => ({
+      missionControl: {
+        ...state.missionControl,
+        chatMessages: [],
+        chatGenerating: false,
+      },
+    })),
+
+  // Reposition mode
+  setRepositionMode: (on) =>
+    set((state) => ({
+      missionControl: { ...state.missionControl, repositionMode: on },
     })),
 }));
 

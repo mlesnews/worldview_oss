@@ -29,12 +29,19 @@ Open source isn't just a license. It's a commitment to the ecosystem you benefit
 - **Timeline Slider** — Scrub through historical data with calendar date picker
 - **Mission Control** — AI-powered geographic intelligence gathering
   - Click the globe to set a deployment area + radius
+  - **Draggable deployment zone** — drag pin to move, drag edge to resize, scroll wheel to adjust radius
   - Micro-agent pipeline: web search → per-item LLM extraction → streaming results
   - 4 specialized agents: News Scout, Military Analyst, Disaster Monitor, GEOINT Analyst
   - Per-agent controls: skip, pause, resume, cancel, editable system prompts
   - Live SSE log streaming with color-coded agent tags
   - Intel results panel with confidence scores and click-to-flyTo
   - GPU-accelerated: ~0.8s per micro-agent call on GPU, instant fallback on CPU
+- **Specialist Chat** — Conversational intelligence orchestrator
+  - Chat with a Mission Control Specialist who dispatches agents as tools
+  - Specialist analyzes your requests, gathers intel via the 4 agents, and synthesizes briefings
+  - Agent results appear inline with clickable source links, category badges, and confidence scores
+  - Markdown-rendered responses with HUD styling
+  - Toggle between Specialist Chat and classic Log/Results view
 - **View Modes** — Electro-Optical, FLIR Thermal, CRT, Night Vision
 - **Live CCTV Feeds** — Real traffic camera streams with simulated object detection overlay
 - **CCTV Clustering** — City-level clusters at global zoom, individual cameras on zoom-in, feed previews at street level
@@ -109,7 +116,7 @@ components/
   Globe.tsx             # CesiumJS globe (9 data layers + deployment layer)
   hud/                  # Header, Sidebar, InfoPanel, AgentPanel, TimelineSlider, etc.
   layers/               # Flight, Satellite, Disaster, Camera, Military, Deployment layers
-  mission-control/      # MissionControlModal, AgentCard, MissionLog, MissionResults
+  mission-control/      # MissionControlModal, AgentCard, MissionLog, MissionResults, ChatPanel
   effects/              # View mode filters (NV, FLIR, CRT)
   ui/                   # Camera feed modal, media modal
 hooks/
@@ -119,7 +126,7 @@ hooks/
 stores/
   worldview-store.ts    # Zustand global state (layers, viewport, mission control)
 lib/
-  agents/               # Ollama client, micro-agents, mission executor, geo-context
+  agents/               # Ollama client, micro-agents, mission executor, specialist chat, geo-context
   api/                  # Data fetching (cameras, RSS news, DuckDuckGo, etc.)
   graph/                # JanusGraph client, schema, queries, GKG ingestion
   camera-clusters.ts    # City-level clustering for CCTV cameras
@@ -130,10 +137,17 @@ lib/
 
 Mission Control deploys AI agents to a geographic area on the globe for targeted intelligence gathering.
 
+**Automated deployment:**
 1. Click **MISSION CONTROL** in the left panel (or click the globe in deployment mode)
-2. Adjust the deployment radius (50km / 200km / 500km)
+2. Adjust the deployment radius (50km / 200km / 500km) or click **REPOSITION** to drag/resize the zone on the globe
 3. Optionally edit agent system prompts or skip agents
 4. Click **DEPLOY ALL** to start the micro-agent pipeline
+
+**Specialist Chat:**
+1. Click **SPECIALIST** in the Mission Control header to open the chat interface
+2. Ask the specialist anything — "What's happening near the deployment zone?" or "Gather military intel for this area"
+3. The specialist dispatches agents as needed and synthesizes results into a briefing
+4. Agent results appear inline with clickable source links
 
 The pipeline searches the web for relevant intel, splits results into individual items, and runs each through a local LLM (via Ollama) for structured extraction. Results stream to the UI in real-time.
 

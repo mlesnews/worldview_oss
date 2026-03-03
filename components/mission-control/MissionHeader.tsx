@@ -9,6 +9,8 @@ export default function MissionHeader() {
   const mc = useWorldViewStore((s) => s.missionControl);
   const setDeploymentArea = useWorldViewStore((s) => s.setDeploymentArea);
   const closeMissionModal = useWorldViewStore((s) => s.closeMissionModal);
+  const setChatActive = useWorldViewStore((s) => s.setChatActive);
+  const setRepositionMode = useWorldViewStore((s) => s.setRepositionMode);
   const { deploy, abort } = useMissionControl();
 
   const area = mc.deploymentArea;
@@ -68,35 +70,62 @@ export default function MissionHeader() {
         </div>
       </div>
 
-      {/* Center: Radius controls */}
-      {isConfiguring && area && (
-        <div className="flex items-center gap-2">
-          <span className="text-[8px] font-mono text-green-600/50 tracking-wide">RADIUS</span>
-          <div className="flex gap-1">
-            {RADIUS_PRESETS.map((km) => (
-              <button
-                key={km}
-                onClick={() => handleRadiusChange(km)}
-                className={`px-2 py-0.5 text-[9px] font-mono tracking-wide border transition-all cursor-pointer ${
-                  area.radiusKm === km
-                    ? "border-green-500/60 text-green-400 bg-green-950/40"
-                    : "border-green-900/30 text-green-600/50 bg-transparent hover:border-green-700/40 hover:text-green-500/70"
-                }`}
-              >
-                {km}km
-              </button>
-            ))}
+      {/* Center: Radius controls + mode toggles */}
+      <div className="flex items-center gap-3">
+        {isConfiguring && area && (
+          <div className="flex items-center gap-2">
+            <span className="text-[8px] font-mono text-green-600/50 tracking-wide">RADIUS</span>
+            <div className="flex gap-1">
+              {RADIUS_PRESETS.map((km) => (
+                <button
+                  key={km}
+                  onClick={() => handleRadiusChange(km)}
+                  className={`px-2 py-0.5 text-[9px] font-mono tracking-wide border transition-all cursor-pointer ${
+                    area.radiusKm === km
+                      ? "border-green-500/60 text-green-400 bg-green-950/40"
+                      : "border-green-900/30 text-green-600/50 bg-transparent hover:border-green-700/40 hover:text-green-500/70"
+                  }`}
+                >
+                  {km}km
+                </button>
+              ))}
+            </div>
+            <input
+              type="number"
+              min={10}
+              max={5000}
+              value={area.radiusKm}
+              onChange={(e) => handleRadiusChange(Number(e.target.value) || 200)}
+              className="w-16 px-1 py-0.5 text-[9px] font-mono text-green-400 bg-green-950/30 border border-green-900/30 focus:border-green-600/50 outline-none"
+            />
           </div>
-          <input
-            type="number"
-            min={10}
-            max={5000}
-            value={area.radiusKm}
-            onChange={(e) => handleRadiusChange(Number(e.target.value) || 200)}
-            className="w-16 px-1 py-0.5 text-[9px] font-mono text-green-400 bg-green-950/30 border border-green-900/30 focus:border-green-600/50 outline-none"
-          />
-        </div>
-      )}
+        )}
+
+        {/* Reposition button (configuring phase only) */}
+        {isConfiguring && area && (
+          <button
+            onClick={() => setRepositionMode(true)}
+            className="px-2 py-0.5 text-[9px] font-mono tracking-wide border border-green-900/30 text-green-600/50 hover:border-green-700/40 hover:text-green-500/70 cursor-pointer transition-all"
+          >
+            REPOSITION
+          </button>
+        )}
+
+        {/* Specialist chat toggle */}
+        <button
+          onClick={() => setChatActive(!mc.chatActive)}
+          disabled={!mc.ollamaConnected && !mc.chatActive}
+          className={`px-3 py-0.5 text-[9px] font-mono tracking-wide border transition-all ${
+            mc.chatActive
+              ? "border-green-500/50 text-green-400 bg-green-950/40 cursor-pointer"
+              : mc.ollamaConnected
+              ? "border-green-900/30 text-green-600/50 hover:text-green-500/70 hover:border-green-700/40 cursor-pointer"
+              : "border-green-900/20 text-green-800/30 cursor-not-allowed"
+          }`}
+        >
+          {mc.chatActive ? "LOG VIEW" : "SPECIALIST"}
+        </button>
+      </div>
 
       {/* Right: Action buttons */}
       <div className="flex items-center gap-2 flex-shrink-0">

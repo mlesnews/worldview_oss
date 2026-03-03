@@ -91,13 +91,44 @@
   - DDG rate-limits aggressively — RSS fallback (BBC, Al Jazeera, USGS) kicks in automatically
   - Reverse geocodes deployment coords via Nominatim to build location-targeted queries
 - `lib/agents/mission-emitter.ts` — EventEmitter singleton (globalThis pattern) bridging executor → SSE
+  - Emits: `log`, `agent_status`, `phase`, `chat_token`, `chat_action` event types
 - `app/api/agents/mission/route.ts` — REST: deploy, abort, pause, resume, cancel, skip, set_prompt
-- `app/api/agents/mission/stream/route.ts` — SSE endpoint for live log/status streaming
+- `app/api/agents/mission/stream/route.ts` — SSE endpoint for live log/status/chat streaming
 - `hooks/useMissionControl.ts` — Client hook: SSE connection, API actions, agent state management
-- `components/layers/DeploymentLayer.tsx` — Globe pin + radius circle (CesiumJS entities)
-- **globalThis singleton pattern** required for `mission-emitter.ts` and `mission.ts` — without it, Turbopack creates separate module instances and SSE events never reach the client
-- Zustand `missionControl` slice: deploymentMode, deploymentArea, agentStates, missionLogs, missionResults
-  - `addMissionLog` deduplicates by ID (SSE reconnects can replay events)
+  - **SSE is a module-level singleton** — multiple components call `useMissionControl()` but only one EventSource is created (ref-counted). Without this, tokens stream N times (once per hook instance)
+- `components/layers/DeploymentLayer.tsx` — Globe pin + radius circle (CesiumJS entities) + drag/resize
+- **globalThis singleton pattern** required for `mission-emitter.ts`, `mission.ts`, and `specialist-chat.ts` — without it, Turbopack creates separate module instances and SSE events never reach the client
+- Zustand `missionControl` slice: deploymentMode, deploymentArea, agentStates, missionLogs, missionResults, chatMessages, chatActive, chatGenerating, repositionMode
+  - `addMissionLog` and `addChatMessage` deduplicate by ID (SSE reconnects can replay events)
+
+## Specialist Chat (Conversational Agent Orchestrator)
+- `lib/agents/specialist-chat.ts` — Server-side orchestrator with ReAct-lite action parsing
+  - **globalThis singleton** for conversation history (survives Turbopack HMR)
+  - System prompt describes 4 available agents + deployment area context + action block syntax
+  - LLM emits `<<ACTION:dispatch|agent=news-scout>>` markers → orchestrator detects, pauses stream, dispatches agent pipeline, injects results, resumes generation for synthesis
+  - **Fallback**: if model ignores action syntax, keyword-based intent detection auto-dispatches agents
+  - Context budget: ~3000 tokens (20 message history + system prompt + agent results) fits lfm2:8b's 8192 window
+- `lib/agents/specialist-types.ts` — `ChatMessage`, `ChatAction` types
+- `app/api/agents/mission/chat/route.ts` — POST (message or abort), GET (history), DELETE (clear)
+- `components/mission-control/ChatPanel.tsx` — Chat UI with auto-scroll, SEND/STOP/CLEAR buttons
+- `components/mission-control/ChatMessage.tsx` — Message renderer with `react-markdown` for HUD-styled markdown
+  - Agent result cards show clickable source URLs, category badges, confidence, coordinates
+  - Results default to expanded so links are immediately visible
+- Toggle: SPECIALIST / LOG VIEW button in `MissionHeader.tsx` switches right panel between chat and log+results
+- Chat requires Ollama online — shows "SPECIALIST OFFLINE" when unavailable
+
+## Draggable / Resizable Deployment Zone
+- `components/layers/DeploymentLayer.tsx` — Full drag/resize system using `ScreenSpaceEventHandler`
+  - **Move**: drag center pin (entity tagged with `_deploymentRole = "center-pin"`)
+  - **Resize**: drag circle edge (haversine distance ≈ radius, ±15% tolerance, min 20km)
+  - **Scroll wheel**: adjust radius while hovering over zone (0.9x/1.1x per tick, clamped 10-5000km)
+  - **Hover feedback**: cursor changes (grab/ew-resize) + entity highlighting (brighter green, larger pin)
+  - Camera controls disabled during drag (`screenSpaceCameraController.enableRotate = false` etc.)
+  - **Stage-then-confirm**: all adjustments update a local `pendingAreaRef` (visual entity updates only). Zustand `setDeploymentArea()` only called when user clicks CONFIRM POSITION
+  - Escape cancels active drag or exits reposition mode
+- REPOSITION button in `MissionHeader.tsx` (configuring phase only) → collapses modal to bottom bar
+- `MissionControlModal.tsx` collapsed bar: shows coordinates, radius controls, CONFIRM/CANCEL, drag instructions
+- CONFIRM commits `pendingAreaRef` to Zustand and restores full modal
 
 ## GDELT API — HTTPS vs HTTP
 - **HTTPS fails from Node.js** for `data.gdeltproject.org` and `api.gdeltproject.org` with TLS cert mismatch (hosts redirect to Google Cloud Storage which serves `*.storage.googleapis.com` certs)

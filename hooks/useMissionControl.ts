@@ -6,6 +6,7 @@ import type {
   DeploymentAreaClient,
   MissionAgentClientState,
   AgentIntelItemClient,
+  ChatMessageClient,
 } from "@/types";
 
 /** Agent ID → display name / role mapping */
@@ -16,6 +17,12 @@ const AGENT_INFO: Record<string, { name: string; role: string }> = {
   "geoint-analyst": { name: "GEOINT Analyst", role: "Geospatial intelligence enrichment" },
 };
 
+// ── Module-level SSE singleton ────────────────────────────────────
+// Prevents multiple EventSource connections when the hook is used
+// from multiple components (MissionControlModal, ChatPanel, MissionHeader).
+let globalEventSource: EventSource | null = null;
+let sseRefCount = 0;
+
 export function useMissionControl() {
   const mc = useWorldViewStore((s) => s.missionControl);
   const setMissionPhase = useWorldViewStore((s) => s.setMissionPhase);
@@ -25,8 +32,9 @@ export function useMissionControl() {
   const setMissionResults = useWorldViewStore((s) => s.setMissionResults);
   const setMissionOllamaStatus = useWorldViewStore((s) => s.setMissionOllamaStatus);
   const clearMission = useWorldViewStore((s) => s.clearMission);
-
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const addChatMessage = useWorldViewStore((s) => s.addChatMessage);
+  const updateChatMessage = useWorldViewStore((s) => s.updateChatMessage);
+  const setChatGenerating = useWorldViewStore((s) => s.setChatGenerating);
 
   // Check Ollama status on mount
   useEffect(() => {
@@ -66,27 +74,39 @@ export function useMissionControl() {
     checkStatus();
   }, [mc.missionModalOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Connect SSE when deploying
+  // Connect SSE when deploying OR when chat is active.
+  // Uses a module-level singleton so multiple hook instances share one connection.
+  const needsSse = (mc.missionPhase === "deploying" || mc.chatActive) && mc.missionModalOpen;
+
   useEffect(() => {
-    if (mc.missionPhase !== "deploying" || !mc.missionModalOpen) {
-      // Clean up if not deploying
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-      }
+    if (!needsSse) {
       return;
     }
 
+    // Increment ref count — only the first caller creates the connection
+    sseRefCount++;
+    if (sseRefCount > 1) {
+      // Connection already exists from another hook instance
+      return () => { sseRefCount--; };
+    }
+
+    // Close any stale connection
+    if (globalEventSource) {
+      globalEventSource.close();
+      globalEventSource = null;
+    }
+
     const es = new EventSource("/api/agents/mission/stream");
-    eventSourceRef.current = es;
+    globalEventSource = es;
 
     es.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        const store = useWorldViewStore.getState();
 
         switch (data.type) {
           case "log":
-            addMissionLog({
+            store.addMissionLog({
               id: data.id,
               timestamp: data.timestamp,
               agentId: data.agentId,
@@ -105,7 +125,6 @@ export function useMissionControl() {
               update.processingTimeMs = data.result.processingTimeMs || 0;
               if (data.status === "completed") update.completedAt = Date.now();
 
-              // Merge results by ID (micro-agents send cumulative lists per agent)
               if (data.result.data?.length > 0) {
                 const newItems: AgentIntelItemClient[] = data.result.data.map(
                   (item: Record<string, unknown>) => ({
@@ -121,24 +140,95 @@ export function useMissionControl() {
                     timestamp: String(item.timestamp || ""),
                   })
                 );
-                const existing = useWorldViewStore.getState().missionControl.missionResults;
+                const existing = store.missionControl.missionResults;
                 const existingIds = new Set(existing.map((i) => i.id));
                 const uniqueNew = newItems.filter((i) => !existingIds.has(i.id));
                 if (uniqueNew.length > 0) {
-                  setMissionResults([...existing, ...uniqueNew]);
+                  store.setMissionResults([...existing, ...uniqueNew]);
                 }
               }
             }
-            updateAgentState(data.agentId, update);
+            store.updateAgentState(data.agentId, update);
             break;
           }
 
           case "phase":
-            setMissionPhase(data.phase);
+            store.setMissionPhase(data.phase);
             break;
 
+          case "chat_token": {
+            const { messageId, token, done } = data;
+            if (done) {
+              store.updateChatMessage(messageId, { isStreaming: false });
+              store.setChatGenerating(false);
+            } else {
+              const msgs = store.missionControl.chatMessages;
+              const existingMsg = msgs.find((m) => m.id === messageId);
+              if (existingMsg) {
+                store.updateChatMessage(messageId, { content: existingMsg.content + token });
+              } else {
+                store.addChatMessage({
+                  id: messageId,
+                  role: "assistant",
+                  content: token,
+                  timestamp: Date.now(),
+                  isStreaming: true,
+                });
+              }
+            }
+            break;
+          }
+
+          case "chat_action": {
+            const { messageId, action, agentId, results } = data;
+            const actionId = `${messageId}-action-${agentId}`;
+            if (action === "dispatching") {
+              store.addChatMessage({
+                id: actionId,
+                role: "agent_result",
+                content: `Dispatching ${agentId}...`,
+                timestamp: Date.now(),
+                agentId,
+                isStreaming: true,
+              });
+            } else if (action === "completed") {
+              const resultItems: AgentIntelItemClient[] = (results || []).map(
+                (item: Record<string, unknown>) => ({
+                  id: String(item.id || ""),
+                  title: String(item.title || ""),
+                  summary: String(item.summary || ""),
+                  latitude: Number(item.latitude) || 0,
+                  longitude: Number(item.longitude) || 0,
+                  category: String(item.category || ""),
+                  subcategory: String(item.subcategory || ""),
+                  confidence: Number(item.confidence) || 0,
+                  sourceUrl: String(item.sourceUrl || ""),
+                  timestamp: String(item.timestamp || ""),
+                })
+              );
+              store.updateChatMessage(actionId, {
+                content: `${agentId}: ${resultItems.length} items found`,
+                agentResults: resultItems,
+                isStreaming: false,
+              });
+              if (resultItems.length > 0) {
+                const existing = store.missionControl.missionResults;
+                const existingIds = new Set(existing.map((i) => i.id));
+                const uniqueNew = resultItems.filter((i) => !existingIds.has(i.id));
+                if (uniqueNew.length > 0) {
+                  store.setMissionResults([...existing, ...uniqueNew]);
+                }
+              }
+            } else if (action === "failed") {
+              store.updateChatMessage(actionId, {
+                content: `${agentId}: failed to gather intel`,
+                isStreaming: false,
+              });
+            }
+            break;
+          }
+
           case "connected":
-            // SSE connected, no action needed
             break;
         }
       } catch {
@@ -147,18 +237,22 @@ export function useMissionControl() {
     };
 
     es.onerror = () => {
-      // EventSource will auto-reconnect, but if mission is done, close
-      if (mc.missionPhase !== "deploying") {
+      const current = useWorldViewStore.getState().missionControl;
+      if (current.missionPhase !== "deploying" && !current.chatActive) {
         es.close();
-        eventSourceRef.current = null;
+        globalEventSource = null;
       }
     };
 
     return () => {
-      es.close();
-      eventSourceRef.current = null;
+      sseRefCount--;
+      if (sseRefCount <= 0) {
+        sseRefCount = 0;
+        es.close();
+        globalEventSource = null;
+      }
     };
-  }, [mc.missionPhase, mc.missionModalOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [needsSse]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── API actions ────────────────────────────────────────────────
 
@@ -253,6 +347,47 @@ export function useMissionControl() {
     }
   }, [updateAgentState]);
 
+  // ── Chat actions ──────────────────────────────────────────────
+
+  const sendChatMessage = useCallback(
+    async (message: string) => {
+      const area = useWorldViewStore.getState().missionControl.deploymentArea;
+      setChatGenerating(true);
+
+      // Optimistic: add user message immediately
+      addChatMessage({
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: message,
+        timestamp: Date.now(),
+      });
+
+      try {
+        await fetch("/api/agents/mission/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, deploymentArea: area }),
+        });
+      } catch {
+        setChatGenerating(false);
+      }
+    },
+    [addChatMessage, setChatGenerating]
+  );
+
+  const stopChat = useCallback(async () => {
+    try {
+      await fetch("/api/agents/mission/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "abort" }),
+      });
+    } catch {
+      // ignore
+    }
+    setChatGenerating(false);
+  }, [setChatGenerating]);
+
   const initAgentStates = useCallback(() => {
     const states: MissionAgentClientState[] = Object.entries(AGENT_INFO).map(
       ([id, info]) => ({
@@ -299,5 +434,7 @@ export function useMissionControl() {
     skipAgent: skipAgentAction,
     initAgentStates,
     clearMission,
+    sendChatMessage,
+    stopChat,
   };
 }

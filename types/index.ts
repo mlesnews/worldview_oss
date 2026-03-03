@@ -246,6 +246,17 @@ export interface AgentIntelItemClient {
   timestamp: string;
 }
 
+/** Chat message for specialist conversation */
+export interface ChatMessageClient {
+  id: string;
+  role: "user" | "assistant" | "system" | "agent_result";
+  content: string;
+  timestamp: number;
+  agentId?: string;
+  agentResults?: AgentIntelItemClient[];
+  isStreaming?: boolean;
+}
+
 /** Full mission control state in Zustand */
 export interface MissionControlState {
   deploymentMode: boolean;
@@ -257,6 +268,12 @@ export interface MissionControlState {
   missionResults: AgentIntelItemClient[];
   ollamaConnected: boolean;
   modelName: string | null;
+  // Specialist chat
+  chatMessages: ChatMessageClient[];
+  chatActive: boolean;
+  chatGenerating: boolean;
+  // Reposition mode
+  repositionMode: boolean;
 }
 
 // Geo-tagged news article (GDELT)
