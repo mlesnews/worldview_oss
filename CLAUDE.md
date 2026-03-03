@@ -71,15 +71,33 @@
 - `lib/agents/` — Agent swarm infrastructure for AI-powered intelligence gathering
 - `lib/agents/ollama-client.ts` — Ollama connection with 3s timeout, 1min backoff (same pattern as JanusGraph)
 - `lib/agents/agents.ts` — Agent definitions: News Scout, Military Analyst, Disaster Monitor, GEOINT Analyst
-- `lib/agents/swarm.ts` — Orchestrator runs all agents in parallel via `Promise.all`
-- `/api/agents` — GET for status, POST `{ "action": "run" }` to trigger swarm
-- Preferred models: `qwen3.5:35b-a3b` (MoE, fast) > `qwen3.5:27b` > `lfm2:24b`
+- `lib/agents/swarm.ts` — Legacy orchestrator (runs all agents sequentially with big context)
+- `/api/agents` — GET for status, POST `{ "action": "run" }` to trigger legacy swarm
+- Preferred models: `sam860/lfm2:8b` (5.9GB, fits 12GB VRAM) > `lfm2:24b` > `lfm2:24b-a2b`
+  - **Ollama stores model names lowercase** — `sam860/lfm2:8b` not `sam860/LFM2:8b`
+  - **Avoid qwen3 on CPU** — thinking mode makes even tiny prompts take 60s+
   - **Avoid `qwen3.5:27b` for tool calling** — broken renderer in Ollama (issue #14493)
 - Graceful degradation: app works fully without Ollama, agents just return empty results
-- Context data gathered from GDELT GEO API, USGS, EONET before sending to LLM
-- **CPU-only performance**: qwen3:1.7b takes ~90s per response on CPU; agents run sequentially to avoid contention
-  - A GPU is strongly recommended for practical swarm execution
-  - Pipeline is verified working: Ollama connects, model resolves, context gathered, agents execute
+
+## Mission Control (Micro-Agent Pipeline)
+- Full-viewport modal (`components/mission-control/`) for geographic agent deployment
+- **Pipeline**: Pin-drop → web search → micro-agent LLM extraction → streaming results
+- `lib/agents/mission.ts` — Mission executor with pause/resume/cancel per agent
+- `lib/agents/micro-agents.ts` — Per-item LLM extraction (~400 char input, 128 token output, 20s timeout)
+  - **LLM speed probe** (15s) auto-detects GPU vs CPU at mission start
+  - GPU path: LLM extraction at ~150 tok/s (~0.8s per item, ~20s for 24 items)
+  - CPU fallback: direct extraction from search data (instant, lower confidence)
+- `lib/agents/geo-context.ts` — Web search (DDG) + RSS/USGS fallback for context gathering
+  - DDG rate-limits aggressively — RSS fallback (BBC, Al Jazeera, USGS) kicks in automatically
+  - Reverse geocodes deployment coords via Nominatim to build location-targeted queries
+- `lib/agents/mission-emitter.ts` — EventEmitter singleton (globalThis pattern) bridging executor → SSE
+- `app/api/agents/mission/route.ts` — REST: deploy, abort, pause, resume, cancel, skip, set_prompt
+- `app/api/agents/mission/stream/route.ts` — SSE endpoint for live log/status streaming
+- `hooks/useMissionControl.ts` — Client hook: SSE connection, API actions, agent state management
+- `components/layers/DeploymentLayer.tsx` — Globe pin + radius circle (CesiumJS entities)
+- **globalThis singleton pattern** required for `mission-emitter.ts` and `mission.ts` — without it, Turbopack creates separate module instances and SSE events never reach the client
+- Zustand `missionControl` slice: deploymentMode, deploymentArea, agentStates, missionLogs, missionResults
+  - `addMissionLog` deduplicates by ID (SSE reconnects can replay events)
 
 ## GDELT API — HTTPS vs HTTP
 - **HTTPS fails from Node.js** for `data.gdeltproject.org` and `api.gdeltproject.org` with TLS cert mismatch (hosts redirect to Google Cloud Storage which serves `*.storage.googleapis.com` certs)
