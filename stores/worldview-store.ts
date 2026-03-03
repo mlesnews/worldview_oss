@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Cesium from 'cesium';
-import type { ViewMode, MapStyle, LayerState, LayerKey, CursorPosition, EntityInfo, Camera, FlightCategory, DisasterCategory, MilitaryCategory, NewsArticle, LiveStream, Disaster, Flight, MilitaryAction, AgentSwarmState, MissionControlState, MissionPhaseClient, MissionAgentClientState, MissionLogClientEntry, AgentIntelItemClient, DeploymentAreaClient, ChatMessageClient } from '@/types';
+import type { ViewMode, MapStyle, LayerState, LayerKey, CursorPosition, EntityInfo, Camera, FlightCategory, DisasterCategory, MilitaryCategory, NewsArticle, LiveStream, Disaster, Flight, MilitaryAction, AgentSwarmState, MissionControlState, MissionPhaseClient, MissionAgentClientState, MissionLogClientEntry, AgentIntelItemClient, DeploymentAreaClient, ChatMessageClient, VoiceAssistantState, VoiceStatus, VoiceExchange } from '@/types';
 
 export interface Viewport {
   centerLat: number;
@@ -110,6 +110,14 @@ interface WorldViewStore {
   clearChat: () => void;
   // Reposition mode
   setRepositionMode: (on: boolean) => void;
+
+  // Voice Assistant
+  voiceAssistant: VoiceAssistantState;
+  setVoiceStatus: (status: VoiceStatus) => void;
+  setVoiceSidecarConnected: (connected: boolean) => void;
+  setVoiceLastExchange: (exchange: VoiceExchange | null) => void;
+  setVoiceError: (error: string | null) => void;
+  setVoiceTranscript: (transcript: string | null) => void;
 }
 
 export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
@@ -456,6 +464,39 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
   setRepositionMode: (on) =>
     set((state) => ({
       missionControl: { ...state.missionControl, repositionMode: on },
+    })),
+
+  // Voice Assistant
+  voiceAssistant: {
+    status: 'offline',
+    sidecarConnected: false,
+    lastExchange: null,
+    error: null,
+    transcript: null,
+  },
+  setVoiceStatus: (status) =>
+    set((state) => ({
+      voiceAssistant: { ...state.voiceAssistant, status },
+    })),
+  setVoiceSidecarConnected: (connected) =>
+    set((state) => ({
+      voiceAssistant: {
+        ...state.voiceAssistant,
+        sidecarConnected: connected,
+        status: connected ? (state.voiceAssistant.status === 'offline' ? 'idle' : state.voiceAssistant.status) : 'offline',
+      },
+    })),
+  setVoiceLastExchange: (exchange) =>
+    set((state) => ({
+      voiceAssistant: { ...state.voiceAssistant, lastExchange: exchange },
+    })),
+  setVoiceError: (error) =>
+    set((state) => ({
+      voiceAssistant: { ...state.voiceAssistant, error },
+    })),
+  setVoiceTranscript: (transcript) =>
+    set((state) => ({
+      voiceAssistant: { ...state.voiceAssistant, transcript },
     })),
 }));
 

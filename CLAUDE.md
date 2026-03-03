@@ -227,8 +227,32 @@ async function fetchPhoenixCameras(): Promise<Camera[]> {
 2. Run `npm run build` — zero errors
 3. The clustering system handles everything else automatically (no changes to CameraLayer needed)
 
+## Voice Assistant (Qwen2.5-Omni Sidecar)
+- **Python sidecar** in `voice-server/` — FastAPI + Qwen2.5-Omni-7B-GPTQ-Int4
+  - `docker compose up voice-server` (preferred) or `voice-server/setup.sh` for local dev
+  - Exposes `POST /v1/voice/chat` (audio in → text + audio + tools out), `GET /v1/voice/status`, `POST /v1/voice/interrupt`
+  - VRAM: ~10-12GB for GPTQ-Int4 model (fits RTX 5070 Ti 12GB with CPU offload)
+  - Model cache persisted in `voice-models` Docker volume (~4GB, downloads once)
+  - `start_period: 120s` on healthcheck — model loading takes ~60-90s
+- **Next.js proxy routes**: `app/api/voice/route.ts`, `app/api/voice/status/route.ts`, `app/api/voice/interrupt/route.ts`
+  - Proxies to `VOICE_SIDECAR_URL` (default `http://127.0.0.1:8790`)
+- **Hook**: `hooks/useVoiceAssistant.ts` — recording, API calls, audio playback, V key shortcut
+  - Polls `/api/voice/status` every 10s (like ollama-client.ts pattern)
+  - `MediaRecorder` with `audio/webm;codecs=opus`, 30s max recording
+  - `AudioContext` created on first user gesture (browser autoplay policy)
+  - V key: push-to-talk (keydown=start, keyup=stop), skips INPUT/TEXTAREA/contentEditable
+- **Tool calls**: Model outputs `<<TOOL:name|param=value>>` markers (same pattern as specialist chat `<<ACTION:...>>`)
+  - Parsed by `lib/voice/tools.ts`: `parseToolCalls()`, `stripToolMarkers()`, `executeTool()`
+  - Tools: `flyTo`, `deployAgents`, `specialistChat`, `toggleLayer`, `setViewMode`
+  - `flyTo` and `deployAgents` geocode via existing `/api/geocode` (Nominatim)
+- **Components**: `VoiceButton.tsx` (push-to-talk, 5 visual states), `VoiceGlowOverlay.tsx` (screen edge glow while recording)
+  - CSS: `.voice-glow-overlay`, `.voice-btn-active`, `.voice-btn-speaking` in `globals.css`
+- **Zustand**: `voiceAssistant` slice with `status`, `sidecarConnected`, `lastExchange`, `error`, `transcript`
+- **VRAM sharing with Ollama**: Voice model occupies GPU when active. Ollama's LFM2:8b auto-unloads after 5min timeout. When voice triggers `deployAgents`, speed probe detects CPU-mode Ollama and uses instant CPU fallback
+- **Graceful degradation**: App works fully without voice sidecar — VoiceButton shows "OFFLINE" state
+
 ## Code Style
 - Green-on-black HUD/military aesthetic — use `#000a00` bg, `#00ff41` / green-400/500 text
-- Custom CSS classes in `globals.css` (`.panel-section`, `.panel-label`, `.scope-*`, `.hud-glow`, `.timeline-*`, `.calendar-*`) alongside Tailwind utilities
+- Custom CSS classes in `globals.css` (`.panel-section`, `.panel-label`, `.scope-*`, `.hud-glow`, `.timeline-*`, `.calendar-*`, `.voice-*`) alongside Tailwind utilities
 - Font: monospace throughout (`font-mono`)
 - Text sizes: 8-11px for HUD elements, tracking-wide/wider

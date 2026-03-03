@@ -276,6 +276,31 @@ export interface MissionControlState {
   repositionMode: boolean;
 }
 
+// ── Voice Assistant ─────────────────────────────────────────────
+
+export type VoiceStatus = 'offline' | 'idle' | 'recording' | 'processing' | 'speaking';
+
+export interface VoiceToolCall {
+  tool: string;
+  params: Record<string, string>;
+}
+
+export interface VoiceExchange {
+  id: string;
+  timestamp: number;
+  userAudioDurationMs: number;
+  assistantText: string;
+  toolCalls: VoiceToolCall[];
+}
+
+export interface VoiceAssistantState {
+  status: VoiceStatus;
+  sidecarConnected: boolean;
+  lastExchange: VoiceExchange | null;
+  error: string | null;
+  transcript: string | null;
+}
+
 // Geo-tagged news article (GDELT)
 export interface NewsArticle {
   id: string;

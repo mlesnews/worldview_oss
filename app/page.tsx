@@ -16,6 +16,8 @@ import ScopeOverlay from "@/components/hud/ScopeOverlay";
 import DataFeed from "@/components/hud/DataFeed";
 import TimelineSlider from "@/components/hud/TimelineSlider";
 import MissionControlModal from "@/components/mission-control/MissionControlModal";
+import VoiceButton from "@/components/hud/VoiceButton";
+import VoiceGlowOverlay from "@/components/effects/VoiceGlowOverlay";
 
 // CesiumJS must be loaded client-side only (no SSR)
 const Globe = dynamic(() => import("@/components/Globe"), {
@@ -71,7 +73,10 @@ export default function Dashboard() {
             </div>
             <ScopeOverlay />
           </div>
-          <TimelineSlider />
+          <div className="flex items-center gap-3 w-full max-w-[900px]">
+            <VoiceButton />
+            <div className="flex-1"><TimelineSlider /></div>
+          </div>
         </div>
 
         {/* RIGHT PANEL - Data Display */}
@@ -99,6 +104,9 @@ export default function Dashboard() {
 
       {/* Mission Control Modal */}
       <MissionControlModal />
+
+      {/* Voice Assistant glow overlay (recording state) */}
+      <VoiceGlowOverlay />
     </div>
   );
 }

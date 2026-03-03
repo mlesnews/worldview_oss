@@ -515,3 +515,39 @@ body {
   color: #d4a017;
   text-shadow: 0 0 8px rgba(212, 160, 23, 0.3);
 }
+
+/* ========================================
+   VOICE ASSISTANT
+   ======================================== */
+
+/* Screen edge glow while recording */
+.voice-glow-overlay {
+  box-shadow: inset 0 0 80px rgba(0,255,65,0.12), inset 0 0 160px rgba(0,255,65,0.06);
+  animation: voice-glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes voice-glow-pulse {
+  0%, 100% { box-shadow: inset 0 0 60px rgba(0,255,65,0.08), inset 0 0 120px rgba(0,255,65,0.04); }
+  50% { box-shadow: inset 0 0 100px rgba(0,255,65,0.15), inset 0 0 200px rgba(0,255,65,0.08); }
+}
+
+/* Mic button active (recording) */
+.voice-btn-active {
+  box-shadow: 0 0 15px rgba(0,255,65,0.4), 0 0 30px rgba(0,255,65,0.2);
+  animation: voice-btn-pulse 1s ease-in-out infinite;
+}
+
+@keyframes voice-btn-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(0,255,65,0.3), 0 0 20px rgba(0,255,65,0.15); }
+  50% { box-shadow: 0 0 20px rgba(0,255,65,0.5), 0 0 40px rgba(0,255,65,0.25); }
+}
+
+/* Mic button speaking */
+.voice-btn-speaking {
+  animation: voice-speak-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes voice-speak-pulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(0,255,65,0.2); }
+  50% { box-shadow: 0 0 12px rgba(0,255,65,0.35); }
+}

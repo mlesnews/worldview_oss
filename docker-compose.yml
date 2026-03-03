@@ -30,5 +30,29 @@ services:
       timeout: 10s
       retries: 10
 
+  voice-server:
+    build: ./voice-server
+    ports:
+      - "${VOICE_PORT:-8790}:8790"
+    volumes:
+      - voice-models:/models
+    environment:
+      - VOICE_MODEL=${VOICE_MODEL:-Qwen/Qwen2.5-Omni-7B-GPTQ-Int4}
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8790/v1/voice/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
 volumes:
   cassandra-data:
+  voice-models:

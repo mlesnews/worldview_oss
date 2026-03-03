@@ -76,3 +76,17 @@ export const DEDUP_TIME_WINDOW_MS = 86_400_000;
  * Used for bounding-box geo queries without a spatial index.
  */
 export const KM_PER_DEGREE_APPROX = 111;
+
+// ── Voice Assistant Sidecar ─────────────────────────────────────
+
+/** Base URL for the Python voice sidecar (Qwen2.5-Omni) */
+export const VOICE_SIDECAR_URL = "http://127.0.0.1:8790";
+
+/** Health-check polling interval */
+export const VOICE_STATUS_POLL_MS = 10_000; // 10s
+
+/** Timeout for sidecar health-check requests */
+export const VOICE_STATUS_TIMEOUT_MS = 3_000; // 3s
+
+/** Maximum recording duration before auto-stop */
+export const VOICE_MAX_RECORDING_MS = 30_000; // 30s
