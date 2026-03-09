@@ -53,7 +53,9 @@ export default function EarthquakeLayer({ viewer }: Props) {
             lat: q.latitude,
             alt: 200_000,
           });
-          flyTo(q.longitude, q.latitude, 200_000);
+          if (useWorldViewStore.getState().clickToZoom) {
+            flyTo(q.longitude, q.latitude, 200_000);
+          }
         }
       },
       Cesium.ScreenSpaceEventType.LEFT_CLICK

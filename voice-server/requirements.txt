@@ -2,4 +2,8 @@ fastapi==0.115.0
 uvicorn==0.30.6
 python-multipart==0.0.12
 transformers @ git+https://github.com/huggingface/transformers@v4.51.3-Qwen2.5-Omni-preview
+accelerate
 soundfile>=0.12.0
+qwen-omni-utils[decord]
+optimum
+edge-tts>=6.1.0

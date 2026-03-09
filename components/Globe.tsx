@@ -26,6 +26,7 @@ import LiveStreamLayer from "@/components/layers/LiveStreamLayer";
 import NewsLayer from "@/components/layers/NewsLayer";
 import MilitaryLayer from "@/components/layers/MilitaryLayer";
 import DeploymentLayer from "@/components/layers/DeploymentLayer";
+import InfoBoxOverlay from "@/components/layers/InfoBoxOverlay";
 
 export default function Globe() {
   const viewerRef = useRef<Cesium.Viewer | null>(null);
@@ -231,6 +232,7 @@ export default function Globe() {
           {layers.news && <NewsLayer viewer={viewerRef.current} />}
           {layers.militaryActions && <MilitaryLayer viewer={viewerRef.current} />}
           <DeploymentLayer viewer={viewerRef.current} />
+          <InfoBoxOverlay viewer={viewerRef.current} />
         </>
       )}
     </div>

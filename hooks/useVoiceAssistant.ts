@@ -111,6 +111,7 @@ export function useVoiceAssistant() {
         stopRecording();
       }, VOICE_MAX_RECORDING_MS);
     } catch (err) {
+      console.warn("[voice]", err);
       setVoiceError(err instanceof Error ? err.message : "Microphone access denied");
       setVoiceStatus("idle");
     }
@@ -270,5 +271,7 @@ export function useVoiceAssistant() {
     };
   }, []);
 
-  return { status, sidecarConnected, startRecording, stopRecording, stopPlayback };
+  const error = useWorldViewStore((s) => s.voiceAssistant.error);
+
+  return { status, sidecarConnected, error, startRecording, stopRecording, stopPlayback };
 }

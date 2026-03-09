@@ -4,7 +4,9 @@ import { useEffect, useRef } from "react";
 import * as Cesium from "cesium";
 import { useDisasters } from "@/hooks/useDisasters";
 import { useWorldViewStore } from "@/stores/worldview-store";
+import { getLayerIcon } from "@/lib/layer-icons";
 import type { DisasterCategory } from "@/types";
+import type { LayerIconType } from "@/lib/layer-icons";
 
 interface Props {
   viewer: Cesium.Viewer;
@@ -72,7 +74,9 @@ export default function DisasterLayer({ viewer }: Props) {
             lat: d.latitude,
             alt: 200_000,
           });
-          flyTo(d.longitude, d.latitude, 200_000);
+          if (useWorldViewStore.getState().clickToZoom) {
+            flyTo(d.longitude, d.latitude, 200_000);
+          }
         }
       },
       Cesium.ScreenSpaceEventType.LEFT_CLICK
@@ -93,11 +97,24 @@ export default function DisasterLayer({ viewer }: Props) {
 
     const filtered = disasters.filter((d) => disasterFilters[d.category]);
 
+    const CATEGORY_ICON_MAP: Record<DisasterCategory, LayerIconType> = {
+      wildfires: "wildfire",
+      volcanoes: "volcano",
+      severeStorms: "storm",
+      floods: "flood",
+      earthquakes: "earthquake",
+      ice: "ice",
+    };
+
     for (const disaster of filtered) {
       const colorHex = CATEGORY_COLORS[disaster.category];
       const color = Cesium.Color.fromCssColorString(colorHex);
       const radius = categoryToRadius(disaster.category, disaster.magnitude);
       const label = CATEGORY_LABELS[disaster.category];
+      const iconType = CATEGORY_ICON_MAP[disaster.category];
+      const iconSize = disaster.magnitude
+        ? Math.max(20, Math.min(32, disaster.magnitude * 4))
+        : 24;
 
       const entity = ds.entities.add({
         position: Cesium.Cartesian3.fromDegrees(
@@ -113,24 +130,24 @@ export default function DisasterLayer({ viewer }: Props) {
           outlineWidth: 1,
           height: 0,
         },
-        point: {
-          pixelSize: disaster.magnitude
-            ? Math.max(4, disaster.magnitude * 2)
-            : 6,
-          color: color,
-          outlineColor: Cesium.Color.BLACK,
-          outlineWidth: 1,
+        billboard: {
+          image: getLayerIcon(iconType, colorHex),
+          width: iconSize,
+          height: iconSize,
+          color: Cesium.Color.WHITE,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          scaleByDistance: new Cesium.NearFarScalar(1e4, 1.4, 1e7, 0.5),
         },
         label: {
           text: disaster.magnitude
             ? `M${disaster.magnitude.toFixed(1)}`
             : label,
-          font: "10px monospace",
+          font: "12px monospace",
           fillColor: color,
           outlineColor: Cesium.Color.BLACK,
           outlineWidth: 2,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          pixelOffset: new Cesium.Cartesian2(12, -4),
+          pixelOffset: new Cesium.Cartesian2(16, -4),
           scaleByDistance: new Cesium.NearFarScalar(1e4, 1, 1e7, 0),
           distanceDisplayCondition: new Cesium.DistanceDisplayCondition(
             0,

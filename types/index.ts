@@ -58,6 +58,19 @@ export interface Satellite {
   altitude: number; // km
   velocity: number; // km/s
   category: string;
+  tleLine1?: string;
+  tleLine2?: string;
+}
+
+// Motion state for dead-reckoning interpolation (flights + ISS)
+export interface FlightMotionState {
+  lat: number;
+  lon: number;
+  alt: number; // meters
+  velocity: number; // m/s
+  heading: number; // degrees, 0=north, clockwise
+  verticalRate: number; // m/s
+  timestamp: number; // seconds (epoch)
 }
 
 // Earthquake data from USGS

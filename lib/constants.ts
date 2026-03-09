@@ -90,3 +90,17 @@ export const VOICE_STATUS_TIMEOUT_MS = 3_000; // 3s
 
 /** Maximum recording duration before auto-stop */
 export const VOICE_MAX_RECORDING_MS = 30_000; // 30s
+
+// ── Entity Motion Interpolation ───────────────────────────────
+
+/** Max seconds to dead-reckon before freezing position */
+export const MAX_DEAD_RECKON_SECONDS = 60;
+
+/** Per-frame lerp factor for heading rotation (0–1, higher = snappier) */
+export const HEADING_LERP_FACTOR = 0.15;
+
+/** Number of points in a satellite orbital track polyline */
+export const ORBITAL_TRACK_POINTS = 60;
+
+/** Duration of orbital track in seconds (2 hours) */
+export const ORBITAL_TRACK_DURATION_S = 7200;

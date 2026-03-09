@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import * as Cesium from "cesium";
 import { useAsteroids } from "@/hooks/useAsteroids";
 import { useWorldViewStore } from "@/stores/worldview-store";
+import { getLayerIcon } from "@/lib/layer-icons";
 
 interface Props {
   viewer: Cesium.Viewer;
@@ -45,7 +46,9 @@ export default function AsteroidLayer({ viewer }: Props) {
             lat: aLat,
             alt: aAlt,
           });
-          flyTo(aLon, aLat, aAlt);
+          if (useWorldViewStore.getState().clickToZoom) {
+            flyTo(aLon, aLat, aAlt);
+          }
         }
       },
       Cesium.ScreenSpaceEventType.LEFT_CLICK
@@ -74,30 +77,28 @@ export default function AsteroidLayer({ viewer }: Props) {
       const lon = Math.cos((angle * Math.PI) / 180) * 180;
       const alt = Math.min(asteroid.missDistance, 500000) * 1000; // cap visual altitude
 
-      const color = asteroid.isPotentiallyHazardous
-        ? Cesium.Color.fromCssColorString("#ff3333")
-        : Cesium.Color.fromCssColorString("#ffaa00");
+      const colorHex = asteroid.isPotentiallyHazardous ? "#ff3333" : "#ffaa00";
+      const color = Cesium.Color.fromCssColorString(colorHex);
+      const iconSize = Math.max(18, Math.min(32, asteroid.estimatedDiameterMax / 30));
 
       const entity = ds.entities.add({
         position: Cesium.Cartesian3.fromDegrees(lon, lat, alt),
-        point: {
-          pixelSize: Math.max(
-            3,
-            Math.min(10, asteroid.estimatedDiameterMax / 50)
-          ),
-          color: color,
-          outlineColor: Cesium.Color.BLACK,
-          outlineWidth: 1,
+        billboard: {
+          image: getLayerIcon("asteroid", colorHex),
+          width: iconSize,
+          height: iconSize,
+          color: Cesium.Color.WHITE,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
           scaleByDistance: new Cesium.NearFarScalar(1e5, 2, 5e8, 0.5),
         },
         label: {
           text: asteroid.name.replace(/[()]/g, ""),
-          font: "8px monospace",
+          font: "11px monospace",
           fillColor: color,
           outlineColor: Cesium.Color.BLACK,
           outlineWidth: 2,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          pixelOffset: new Cesium.Cartesian2(10, -4),
+          pixelOffset: new Cesium.Cartesian2(16, -4),
           scaleByDistance: new Cesium.NearFarScalar(1e5, 1, 5e7, 0),
         },
       });

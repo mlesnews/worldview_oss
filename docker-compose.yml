@@ -10,9 +10,10 @@ services:
       - HEAP_NEWSIZE=${CASSANDRA_HEAP_NEW:-200M}
     healthcheck:
       test: ["CMD-SHELL", "cqlsh -e 'describe cluster'"]
-      interval: 30s
+      interval: 10s
       timeout: 10s
-      retries: 5
+      retries: 10
+      start_period: 30s
 
   janusgraph:
     image: janusgraph/janusgraph:1.0.0
@@ -37,14 +38,14 @@ services:
     volumes:
       - voice-models:/models
     environment:
-      - VOICE_MODEL=${VOICE_MODEL:-Qwen/Qwen2.5-Omni-7B-GPTQ-Int4}
+      - VOICE_MODEL=${VOICE_MODEL:-Qwen/Qwen2.5-Omni-3B}
       - NVIDIA_VISIBLE_DEVICES=all
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: 1
+              count: all
               capabilities: [gpu]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8790/v1/voice/status"]

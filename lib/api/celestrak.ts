@@ -79,6 +79,8 @@ export async function fetchSatellites(
         altitude: alt,
         velocity: speed,
         category: group,
+        tleLine1: record.line1,
+        tleLine2: record.line2,
       });
     } catch {
       // Skip malformed TLE entries

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import * as Cesium from "cesium";
 import { useNews } from "@/hooks/useNews";
 import { useWorldViewStore } from "@/stores/worldview-store";
+import { getLayerIcon } from "@/lib/layer-icons";
 
 interface Props {
   viewer: Cesium.Viewer;
@@ -42,7 +43,9 @@ export default function NewsLayer({ viewer }: Props) {
             lat: n.latitude,
             alt: 500_000,
           });
-          flyTo(n.longitude, n.latitude, 500_000);
+          if (useWorldViewStore.getState().clickToZoom) {
+            flyTo(n.longitude, n.latitude, 500_000);
+          }
         }
       },
       Cesium.ScreenSpaceEventType.LEFT_CLICK
@@ -69,20 +72,22 @@ export default function NewsLayer({ viewer }: Props) {
           article.longitude,
           article.latitude
         ),
-        point: {
-          pixelSize: 5,
-          color: color,
-          outlineColor: Cesium.Color.BLACK,
-          outlineWidth: 1,
+        billboard: {
+          image: getLayerIcon("news", NEWS_COLOR),
+          width: 22,
+          height: 22,
+          color: Cesium.Color.WHITE,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+          scaleByDistance: new Cesium.NearFarScalar(1e4, 1.4, 8e6, 0.5),
         },
         label: {
           text: "NEWS",
-          font: "9px monospace",
+          font: "11px monospace",
           fillColor: color,
           outlineColor: Cesium.Color.BLACK,
           outlineWidth: 2,
           style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          pixelOffset: new Cesium.Cartesian2(10, -4),
+          pixelOffset: new Cesium.Cartesian2(14, -4),
           scaleByDistance: new Cesium.NearFarScalar(1e4, 1, 5e6, 0),
           distanceDisplayCondition: new Cesium.DistanceDisplayCondition(
             0,

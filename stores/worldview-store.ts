@@ -118,6 +118,10 @@ interface WorldViewStore {
   setVoiceLastExchange: (exchange: VoiceExchange | null) => void;
   setVoiceError: (error: string | null) => void;
   setVoiceTranscript: (transcript: string | null) => void;
+
+  // Settings
+  clickToZoom: boolean;
+  toggleClickToZoom: () => void;
 }
 
 export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
@@ -498,5 +502,9 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
     set((state) => ({
       voiceAssistant: { ...state.voiceAssistant, transcript },
     })),
+
+  // Settings
+  clickToZoom: false,
+  toggleClickToZoom: () => set((state) => ({ clickToZoom: !state.clickToZoom })),
 }));
 

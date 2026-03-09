@@ -45,6 +45,10 @@ Open source isn't just a license. It's a commitment to the ecosystem you benefit
 - **View Modes** — Electro-Optical, FLIR Thermal, CRT, Night Vision
 - **Live CCTV Feeds** — Real traffic camera streams with simulated object detection overlay
 - **CCTV Clustering** — City-level clusters at global zoom, individual cameras on zoom-in, feed previews at street level
+- **Voice Control** — Push-to-talk voice assistant (hold V or click mic button)
+  - Sends audio to a local voice server for speech-to-text → LLM → text-to-speech
+  - Can execute tool calls: fly to locations, toggle layers, change view modes, deploy missions
+  - Requires a running voice sidecar (`voice-server/`)
 - **Search** — Geocode any location and fly to it on the globe
 - **Quick Nav** — One-click navigation to major world cities
 
@@ -159,6 +163,32 @@ ollama serve                   # Start the server
 ```
 
 The system auto-detects GPU availability. On GPU (~150 tok/s), a full 24-item mission completes in ~20 seconds. On CPU, it falls back to direct extraction without LLM (instant, lower quality). The app works fully without Ollama installed.
+
+## Voice Control
+
+Hold **V** or click the mic button to use push-to-talk voice control. The voice assistant can navigate the globe, toggle layers, change view modes, and deploy missions via spoken commands.
+
+**Setup:**
+```bash
+cd voice-server
+./setup.sh        # Install Python dependencies
+./run.sh          # Start the voice sidecar
+```
+
+The status indicator shows `VOICE [V]` when connected and ready. Errors (e.g., mic access denied) appear below the button.
+
+**Linux (PipeWire) microphone troubleshooting:**
+
+If the button shows "Requested device not found", your PipeWire audio profile likely doesn't include mic input. Fix it:
+
+```bash
+# Check if a mic source exists
+pactl list sources short
+# If only a .monitor source appears (no alsa_input), switch to duplex profile:
+pactl set-card-profile alsa_card.pci-0000_00_1f.3 "output:analog-stereo+input:analog-stereo"
+```
+
+Your card name may differ — run `pactl list cards short` to find it. The key is switching from an output-only profile to a duplex profile that includes `+input:analog-stereo`.
 
 ## Data Sources & Attribution
 

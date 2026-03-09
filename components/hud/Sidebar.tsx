@@ -62,6 +62,8 @@ export default function Sidebar() {
   const toggleMilitaryFilter = useWorldViewStore((s) => s.toggleMilitaryFilter);
   const mapStyle = useWorldViewStore((s) => s.mapStyle);
   const setMapStyle = useWorldViewStore((s) => s.setMapStyle);
+  const clickToZoom = useWorldViewStore((s) => s.clickToZoom);
+  const toggleClickToZoom = useWorldViewStore((s) => s.toggleClickToZoom);
   const [flightsExpanded, setFlightsExpanded] = useState(false);
   const [disasterExpanded, setDisasterExpanded] = useState(false);
   const [militaryExpanded, setMilitaryExpanded] = useState(false);
@@ -257,6 +259,37 @@ export default function Sidebar() {
             </div>
           );
         })}
+      </div>
+    </div>
+
+    <div className="panel-section">
+      <div className="panel-label">SETTINGS</div>
+      <div className="flex flex-col gap-1">
+        <button
+          onClick={toggleClickToZoom}
+          className={`
+            flex items-center gap-2 px-2.5 py-1.5 rounded-sm font-mono text-[10px] tracking-wide
+            border transition-all duration-200 cursor-pointer w-full
+            ${
+              clickToZoom
+                ? "bg-green-900/30 border-green-500/50 text-green-400 shadow-[0_0_8px_rgba(0,255,0,0.15)]"
+                : "bg-black/40 border-green-900/30 text-green-700/50 hover:border-green-700/50 hover:text-green-600/70"
+            }
+          `}
+        >
+          <span
+            className={`w-2.5 h-2.5 border rounded-sm flex items-center justify-center text-[7px]
+              ${
+                clickToZoom
+                  ? "border-green-500/50 bg-green-900/30 text-green-400"
+                  : "border-green-900/30"
+              }
+            `}
+          >
+            {clickToZoom ? "\u2713" : ""}
+          </span>
+          <span>Zoom on Click</span>
+        </button>
       </div>
     </div>
     </>

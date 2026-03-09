@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useVoiceAssistant } from "@/hooks/useVoiceAssistant";
 
 const MicIcon = () => (
@@ -20,7 +21,19 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function VoiceButton() {
-  const { status, startRecording, stopRecording, stopPlayback } = useVoiceAssistant();
+  const { status, error, startRecording, stopRecording, stopPlayback } = useVoiceAssistant();
+  const [visibleError, setVisibleError] = useState<string | null>(null);
+
+  // Show error briefly then auto-clear
+  useEffect(() => {
+    if (!error) {
+      setVisibleError(null);
+      return;
+    }
+    setVisibleError(error);
+    const timer = setTimeout(() => setVisibleError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   const onPointerDown = () => {
     if (status === "offline") return;
@@ -75,6 +88,11 @@ export default function VoiceButton() {
         <MicIcon />
       </button>
       <span className={labelClass}>{STATUS_LABELS[status] ?? "VOICE"}</span>
+      {visibleError && (
+        <span className="text-[7px] text-red-500/80 font-mono max-w-[120px] text-center leading-tight mt-0.5 truncate">
+          {visibleError}
+        </span>
+      )}
     </div>
   );
 }

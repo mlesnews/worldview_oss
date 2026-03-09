@@ -78,7 +78,9 @@ export default function MilitaryLayer({ viewer }: Props) {
             lat: d.latitude,
             alt: 300_000,
           });
-          flyTo(d.longitude, d.latitude, 300_000);
+          if (useWorldViewStore.getState().clickToZoom) {
+            flyTo(d.longitude, d.latitude, 300_000);
+          }
         }
       },
       Cesium.ScreenSpaceEventType.LEFT_CLICK

@@ -43,7 +43,9 @@ export default function LiveStreamLayer({ viewer }: Props) {
             lat: s.latitude,
             alt: 200_000,
           });
-          flyTo(s.longitude, s.latitude, 200_000);
+          if (useWorldViewStore.getState().clickToZoom) {
+            flyTo(s.longitude, s.latitude, 200_000);
+          }
           openMediaModal(s.videoId, s.title);
         }
       },

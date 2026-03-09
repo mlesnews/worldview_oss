@@ -16,7 +16,6 @@ import ScopeOverlay from "@/components/hud/ScopeOverlay";
 import DataFeed from "@/components/hud/DataFeed";
 import TimelineSlider from "@/components/hud/TimelineSlider";
 import MissionControlModal from "@/components/mission-control/MissionControlModal";
-import VoiceButton from "@/components/hud/VoiceButton";
 import VoiceGlowOverlay from "@/components/effects/VoiceGlowOverlay";
 
 // CesiumJS must be loaded client-side only (no SSR)
@@ -64,7 +63,7 @@ export default function Dashboard() {
           <BottomBar />
         </div>
 
-        {/* CENTER - Globe in circular viewport + timeline */}
+        {/* CENTER - Globe in circular viewport */}
         <div className="flex-1 flex flex-col items-center justify-center bg-[#000a00] relative min-w-0">
           <div className="scope-container">
             <div className="scope-viewport">
@@ -72,10 +71,6 @@ export default function Dashboard() {
               <ViewModeFilter />
             </div>
             <ScopeOverlay />
-          </div>
-          <div className="flex items-center gap-3 w-full max-w-[900px]">
-            <VoiceButton />
-            <div className="flex-1"><TimelineSlider /></div>
           </div>
         </div>
 
@@ -85,6 +80,9 @@ export default function Dashboard() {
           <DataFeed />
         </div>
       </div>
+
+      {/* Timeline Command Bar (full-width) */}
+      <TimelineSlider />
 
       {/* Bottom Classification Banner */}
       <div className="w-full bg-[#1a0000]/80 border-t border-red-900/50 text-center py-0.5 flex-shrink-0 z-20">
