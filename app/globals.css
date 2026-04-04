@@ -179,6 +179,29 @@ body {
 }
 
 /* ========================================
+   TRADING VIEW (amber/gold)
+   ======================================== */
+
+.view-trading {
+  background: transparent;
+  mix-blend-mode: normal;
+}
+
+.view-trading::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 191, 0, 0.08) 0%,
+    rgba(180, 130, 0, 0.12) 50%,
+    rgba(100, 70, 0, 0.18) 100%
+  );
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* ========================================
    VIGNETTE (all modes except EO)
    ======================================== */
 

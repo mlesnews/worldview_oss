@@ -39,7 +39,7 @@ export default function ViewModeFilter() {
           viewMode === "nightvision" ? "view-nightvision" : ""
         } ${viewMode === "flir" ? "view-flir" : ""} ${
           viewMode === "crt" ? "view-crt" : ""
-        }`}
+        } ${viewMode === "trading" ? "view-trading" : ""}`}
       />
 
       {/* CRT scanlines */}

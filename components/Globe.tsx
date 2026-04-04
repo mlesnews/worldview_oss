@@ -26,6 +26,20 @@ import LiveStreamLayer from "@/components/layers/LiveStreamLayer";
 import NewsLayer from "@/components/layers/NewsLayer";
 import MilitaryLayer from "@/components/layers/MilitaryLayer";
 import DeploymentLayer from "@/components/layers/DeploymentLayer";
+import DataCenterLayer from "@/components/layers/DataCenterLayer";
+import WhaleAlertLayer from "@/components/layers/WhaleAlertLayer";
+import PolymarketLayer from "@/components/layers/PolymarketLayer";
+import SyphonIntelLayer from "@/components/layers/SyphonIntelLayer";
+import EnergyGridLayer from "@/components/layers/EnergyGridLayer";
+import ChipFabLayer from "@/components/layers/ChipFabLayer";
+import SubmarineCableLayer from "@/components/layers/SubmarineCableLayer";
+import GpuSupplyLayer from "@/components/layers/GpuSupplyLayer";
+import CryptoMiningLayer from "@/components/layers/CryptoMiningLayer";
+import VcFundingLayer from "@/components/layers/VcFundingLayer";
+import MonkeyWerxLayer from "@/components/layers/MonkeyWerxLayer";
+import MilitaryAircraftLayer from "@/components/layers/MilitaryAircraftLayer";
+import LuminaConfidenceLayer from "@/components/layers/LuminaConfidenceLayer";
+import CustomLayerComponent from "@/components/layers/CustomLayerComponent";
 
 export default function Globe() {
   const viewerRef = useRef<Cesium.Viewer | null>(null);
@@ -72,6 +86,17 @@ export default function Globe() {
         roll: 0,
       },
     });
+
+    // Enable touch/gesture support (pinch-to-zoom, pinch-to-tilt)
+    viewer.scene.screenSpaceCameraController.zoomEventTypes = [
+      Cesium.CameraEventType.WHEEL,
+      Cesium.CameraEventType.PINCH,
+    ];
+    viewer.scene.screenSpaceCameraController.tiltEventTypes = [
+      Cesium.CameraEventType.MIDDLE_DRAG,
+      Cesium.CameraEventType.PINCH,
+      { eventType: Cesium.CameraEventType.LEFT_DRAG, modifier: Cesium.KeyboardEventModifier.CTRL },
+    ];
 
     viewerRef.current = viewer;
     setViewer(viewer);
@@ -230,6 +255,20 @@ export default function Globe() {
           {layers.livestreams && <LiveStreamLayer viewer={viewerRef.current} />}
           {layers.news && <NewsLayer viewer={viewerRef.current} />}
           {layers.militaryActions && <MilitaryLayer viewer={viewerRef.current} />}
+          {layers.dataCenters && <DataCenterLayer viewer={viewerRef.current} />}
+          {layers.whaleAlerts && <WhaleAlertLayer viewer={viewerRef.current} />}
+          {layers.polymarket && <PolymarketLayer viewer={viewerRef.current} />}
+          {layers.syphonIntel && <SyphonIntelLayer viewer={viewerRef.current} />}
+          {layers.energyGrid && <EnergyGridLayer viewer={viewerRef.current} />}
+          {layers.chipFabs && <ChipFabLayer viewer={viewerRef.current} />}
+          {layers.submarineCables && <SubmarineCableLayer viewer={viewerRef.current} />}
+          {layers.gpuSupplyChain && <GpuSupplyLayer viewer={viewerRef.current} />}
+          {layers.cryptoMining && <CryptoMiningLayer viewer={viewerRef.current} />}
+          {layers.vcFunding && <VcFundingLayer viewer={viewerRef.current} />}
+          {layers.monkeyWerx && <MonkeyWerxLayer viewer={viewerRef.current} />}
+          {layers.militaryAircraft && <MilitaryAircraftLayer viewer={viewerRef.current} />}
+          {layers.luminaConfidence && <LuminaConfidenceLayer viewer={viewerRef.current} />}
+          {layers.customLayers && <CustomLayerComponent viewer={viewerRef.current} />}
           <DeploymentLayer viewer={viewerRef.current} />
         </>
       )}

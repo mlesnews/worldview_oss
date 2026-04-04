@@ -1,8 +1,8 @@
-export type ViewMode = 'eo' | 'flir' | 'nightvision' | 'crt';
+export type ViewMode = 'eo' | 'flir' | 'nightvision' | 'crt' | 'trading';
 
 export type MapStyle = 'dark' | 'terrain' | 'city';
 
-export type LayerKey = 'flights' | 'satellites' | 'disasters' | 'asteroids' | 'weather' | 'cameras' | 'livestreams' | 'news' | 'militaryActions';
+export type LayerKey = 'flights' | 'satellites' | 'disasters' | 'asteroids' | 'weather' | 'cameras' | 'livestreams' | 'news' | 'militaryActions' | 'dataCenters' | 'whaleAlerts' | 'polymarket' | 'syphonIntel' | 'energyGrid' | 'chipFabs' | 'submarineCables' | 'gpuSupplyChain' | 'cryptoMining' | 'vcFunding' | 'monkeyWerx' | 'militaryAircraft' | 'luminaConfidence' | 'customLayers';
 
 export interface LayerState {
   flights: boolean;
@@ -14,6 +14,20 @@ export interface LayerState {
   livestreams: boolean;
   news: boolean;
   militaryActions: boolean;
+  dataCenters: boolean;
+  whaleAlerts: boolean;
+  polymarket: boolean;
+  syphonIntel: boolean;
+  energyGrid: boolean;
+  chipFabs: boolean;
+  submarineCables: boolean;
+  gpuSupplyChain: boolean;
+  cryptoMining: boolean;
+  vcFunding: boolean;
+  monkeyWerx: boolean;
+  militaryAircraft: boolean;
+  luminaConfidence: boolean;
+  customLayers: boolean;
 }
 
 export interface CursorPosition {
@@ -274,6 +288,161 @@ export interface MissionControlState {
   chatGenerating: boolean;
   // Reposition mode
   repositionMode: boolean;
+}
+
+// ── Kintsugi Layer Types ─────────────────────────────────
+
+export interface DataCenter {
+  id: string;
+  name: string;
+  provider: string; // AWS, Azure, Google, Oracle
+  latitude: number;
+  longitude: number;
+  region: string;
+  capacity?: string;
+  gpuInfo?: string;
+}
+
+export interface WhaleAlert {
+  id: string;
+  blockchain: string;
+  symbol: string;
+  amount: number;
+  amountUsd: number;
+  from: string;
+  to: string;
+  latitude: number;
+  longitude: number;
+  timestamp: string;
+  transactionHash: string;
+}
+
+export interface PolymarketPrediction {
+  id: string;
+  question: string;
+  probability: number;
+  volume: number;
+  latitude: number;
+  longitude: number;
+  category: string;
+  endDate: string;
+  url: string;
+}
+
+export interface SyphonEvent {
+  id: string;
+  title: string;
+  summary: string;
+  source: string;
+  latitude: number;
+  longitude: number;
+  category: string;
+  severity: number;
+  timestamp: string;
+  url?: string;
+}
+
+export interface EnergyGridNode {
+  id: string;
+  name: string;
+  type: 'solar' | 'wind' | 'nuclear' | 'hydro' | 'gas' | 'coal' | 'grid';
+  latitude: number;
+  longitude: number;
+  capacityMw: number;
+  currentOutputMw?: number;
+  region: string;
+}
+
+export interface ChipFab {
+  id: string;
+  name: string;
+  company: string; // TSMC, Intel, Samsung, GlobalFoundries
+  latitude: number;
+  longitude: number;
+  processNode: string; // e.g. "3nm", "5nm"
+  status: 'operational' | 'construction' | 'planned';
+  investmentBn?: number;
+}
+
+export interface SubmarineCable {
+  id: string;
+  name: string;
+  readyForService: string;
+  lengthKm: number;
+  owners: string;
+  landing1: { lat: number; lon: number; name: string };
+  landing2: { lat: number; lon: number; name: string };
+  capacityTbps?: number;
+}
+
+export interface GpuSupplyNode {
+  id: string;
+  name: string;
+  type: 'manufacturer' | 'fab' | 'distributor' | 'datacenter';
+  latitude: number;
+  longitude: number;
+  company: string;
+  details?: string;
+}
+
+export interface CryptoMiningNode {
+  id: string;
+  name: string;
+  hashrate: string;
+  latitude: number;
+  longitude: number;
+  algorithm: string;
+  energySource?: string;
+  operator?: string;
+}
+
+export interface VcFundingEvent {
+  id: string;
+  company: string;
+  amountUsd: number;
+  round: string;
+  investors: string;
+  latitude: number;
+  longitude: number;
+  date: string;
+  sector: string;
+}
+
+export interface MonkeyWerxSitrep {
+  id: string;
+  callsign: string;
+  aircraftType: string;
+  latitude: number;
+  longitude: number;
+  altitude: number;
+  heading: number;
+  category: 'tanker' | 'isr' | 'transport' | 'fighter' | 'helo' | 'special' | 'other';
+  squawk?: string;
+  timestamp: string;
+}
+
+export type MilitaryAircraftCategory = 'tanker' | 'isr' | 'transport' | 'fighter' | 'helo' | 'special' | 'other';
+
+export interface LuminaConfidencePoint {
+  id: string;
+  region: string;
+  latitude: number;
+  longitude: number;
+  confidence: number; // 0-100
+  sentiment: number; // -1 to 1
+  signalCount: number;
+  timestamp: string;
+}
+
+export interface CustomLayer {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  description?: string;
+  color?: string;
+  icon?: string;
+  metadata?: Record<string, string | number>;
 }
 
 // Geo-tagged news article (GDELT)

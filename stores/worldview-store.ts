@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as Cesium from 'cesium';
-import type { ViewMode, MapStyle, LayerState, LayerKey, CursorPosition, EntityInfo, Camera, FlightCategory, DisasterCategory, MilitaryCategory, NewsArticle, LiveStream, Disaster, Flight, MilitaryAction, AgentSwarmState, MissionControlState, MissionPhaseClient, MissionAgentClientState, MissionLogClientEntry, AgentIntelItemClient, DeploymentAreaClient, ChatMessageClient } from '@/types';
+import type { ViewMode, MapStyle, LayerState, LayerKey, CursorPosition, EntityInfo, Camera, FlightCategory, DisasterCategory, MilitaryCategory, MilitaryAircraftCategory, NewsArticle, LiveStream, Disaster, Flight, MilitaryAction, AgentSwarmState, MissionControlState, MissionPhaseClient, MissionAgentClientState, MissionLogClientEntry, AgentIntelItemClient, DeploymentAreaClient, ChatMessageClient, DataCenter, WhaleAlert, PolymarketPrediction, SyphonEvent, EnergyGridNode, ChipFab, SubmarineCable, GpuSupplyNode, CryptoMiningNode, VcFundingEvent, MonkeyWerxSitrep, LuminaConfidencePoint, CustomLayer } from '@/types';
 
 export interface Viewport {
   centerLat: number;
@@ -65,6 +65,41 @@ interface WorldViewStore {
   militaryActions: MilitaryAction[];
   setMilitaryActions: (actions: MilitaryAction[]) => void;
 
+  // Kintsugi layer data
+  dataCenters: DataCenter[];
+  setDataCenters: (d: DataCenter[]) => void;
+  whaleAlerts: WhaleAlert[];
+  setWhaleAlerts: (d: WhaleAlert[]) => void;
+  polymarketPredictions: PolymarketPrediction[];
+  setPolymarketPredictions: (d: PolymarketPrediction[]) => void;
+  syphonEvents: SyphonEvent[];
+  setSyphonEvents: (d: SyphonEvent[]) => void;
+  energyGridNodes: EnergyGridNode[];
+  setEnergyGridNodes: (d: EnergyGridNode[]) => void;
+  chipFabs: ChipFab[];
+  setChipFabs: (d: ChipFab[]) => void;
+  submarineCables: SubmarineCable[];
+  setSubmarineCables: (d: SubmarineCable[]) => void;
+  gpuSupplyNodes: GpuSupplyNode[];
+  setGpuSupplyNodes: (d: GpuSupplyNode[]) => void;
+  cryptoMiningNodes: CryptoMiningNode[];
+  setCryptoMiningNodes: (d: CryptoMiningNode[]) => void;
+  vcFundingEvents: VcFundingEvent[];
+  setVcFundingEvents: (d: VcFundingEvent[]) => void;
+  monkeyWerxSitreps: MonkeyWerxSitrep[];
+  setMonkeyWerxSitreps: (d: MonkeyWerxSitrep[]) => void;
+  luminaConfidencePoints: LuminaConfidencePoint[];
+  setLuminaConfidencePoints: (d: LuminaConfidencePoint[]) => void;
+  customLayerItems: CustomLayer[];
+  setCustomLayerItems: (d: CustomLayer[]) => void;
+
+  // Military aircraft sub-filters
+  militaryAircraftFilters: Record<MilitaryAircraftCategory, boolean>;
+  toggleMilitaryAircraftFilter: (category: MilitaryAircraftCategory) => void;
+
+  // Trading view preset
+  activateTradingView: () => void;
+
   viewport: Viewport;
   setViewport: (v: Viewport) => void;
 
@@ -123,13 +158,27 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
     livestreams: false,
     news: false,
     militaryActions: false,
+    dataCenters: false,
+    whaleAlerts: false,
+    polymarket: false,
+    syphonIntel: false,
+    energyGrid: false,
+    chipFabs: false,
+    submarineCables: false,
+    gpuSupplyChain: false,
+    cryptoMining: false,
+    vcFunding: false,
+    monkeyWerx: false,
+    militaryAircraft: false,
+    luminaConfidence: false,
+    customLayers: false,
   },
   toggleLayer: (layer) =>
     set((state) => ({
       layers: { ...state.layers, [layer]: !state.layers[layer] },
     })),
 
-  viewMode: 'nightvision',
+  viewMode: 'eo',
   setViewMode: (mode) => set({ viewMode: mode }),
 
   mapStyle: 'dark',
@@ -211,6 +260,64 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
   setDisasterEvents: (events) => set({ disasterEvents: events }),
   militaryActions: [],
   setMilitaryActions: (actions) => set({ militaryActions: actions }),
+
+  // Kintsugi layer data
+  dataCenters: [],
+  setDataCenters: (d) => set({ dataCenters: d }),
+  whaleAlerts: [],
+  setWhaleAlerts: (d) => set({ whaleAlerts: d }),
+  polymarketPredictions: [],
+  setPolymarketPredictions: (d) => set({ polymarketPredictions: d }),
+  syphonEvents: [],
+  setSyphonEvents: (d) => set({ syphonEvents: d }),
+  energyGridNodes: [],
+  setEnergyGridNodes: (d) => set({ energyGridNodes: d }),
+  chipFabs: [],
+  setChipFabs: (d) => set({ chipFabs: d }),
+  submarineCables: [],
+  setSubmarineCables: (d) => set({ submarineCables: d }),
+  gpuSupplyNodes: [],
+  setGpuSupplyNodes: (d) => set({ gpuSupplyNodes: d }),
+  cryptoMiningNodes: [],
+  setCryptoMiningNodes: (d) => set({ cryptoMiningNodes: d }),
+  vcFundingEvents: [],
+  setVcFundingEvents: (d) => set({ vcFundingEvents: d }),
+  monkeyWerxSitreps: [],
+  setMonkeyWerxSitreps: (d) => set({ monkeyWerxSitreps: d }),
+  luminaConfidencePoints: [],
+  setLuminaConfidencePoints: (d) => set({ luminaConfidencePoints: d }),
+  customLayerItems: [],
+  setCustomLayerItems: (d) => set({ customLayerItems: d }),
+
+  // Military aircraft sub-filters
+  militaryAircraftFilters: {
+    tanker: true,
+    isr: true,
+    transport: true,
+    fighter: true,
+    helo: true,
+    special: true,
+    other: true,
+  },
+  toggleMilitaryAircraftFilter: (category) =>
+    set((state) => ({
+      militaryAircraftFilters: {
+        ...state.militaryAircraftFilters,
+        [category]: !state.militaryAircraftFilters[category],
+      },
+    })),
+
+  // Trading view preset
+  activateTradingView: () =>
+    set((state) => ({
+      viewMode: 'trading' as ViewMode,
+      layers: {
+        ...state.layers,
+        whaleAlerts: true,
+        polymarket: true,
+        luminaConfidence: true,
+      },
+    })),
 
   agentSwarmStatus: {
     ollamaConnected: false,

@@ -1,0 +1,93 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import * as Cesium from "cesium";
+import { useDataCenters } from "@/hooks/useDataCenters";
+import { useWorldViewStore } from "@/stores/worldview-store";
+
+interface Props {
+  viewer: Cesium.Viewer;
+}
+
+const LAYER_COLOR = "#00aaff";
+
+export default function DataCenterLayer({ viewer }: Props) {
+  const { items } = useDataCenters(true);
+  const dsRef = useRef<Cesium.CustomDataSource | null>(null);
+  const setSelectedEntity = useWorldViewStore((s) => s.setSelectedEntity);
+  const flyTo = useWorldViewStore((s) => s.flyTo);
+
+  useEffect(() => {
+    const ds = new Cesium.CustomDataSource("dataCenters");
+    viewer.dataSources.add(ds);
+    dsRef.current = ds;
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    handler.setInputAction(
+      (click: { position: Cesium.Cartesian2 }) => {
+        const picked = viewer.scene.pick(click.position);
+        if (Cesium.defined(picked) && picked.id?._dcData) {
+          const d = picked.id._dcData;
+          setSelectedEntity({
+            id: d.id,
+            type: "news",
+            name: d.name,
+            details: {
+              Provider: d.provider,
+              Name: d.name,
+              Region: d.region,
+              Capacity: d.capacity,
+              "GPU Info": d.gpuInfo,
+            },
+            lon: d.longitude,
+            lat: d.latitude,
+          });
+          flyTo(d.longitude, d.latitude, 500_000);
+        }
+      },
+      Cesium.ScreenSpaceEventType.LEFT_CLICK
+    );
+
+    return () => {
+      handler.destroy();
+      if (dsRef.current) {
+        viewer.dataSources.remove(dsRef.current, true);
+      }
+    };
+  }, [viewer, setSelectedEntity, flyTo]);
+
+  useEffect(() => {
+    const ds = dsRef.current;
+    if (!ds) return;
+    ds.entities.removeAll();
+
+    const color = Cesium.Color.fromCssColorString(LAYER_COLOR);
+
+    for (const item of items) {
+      const entity = ds.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(item.longitude, item.latitude),
+        point: {
+          pixelSize: 8,
+          color,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 1,
+        },
+        label: {
+          text: item.provider,
+          font: "9px monospace",
+          fillColor: color,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 2,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(10, -4),
+          scaleByDistance: new Cesium.NearFarScalar(1e4, 1, 5e6, 0),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 5e6),
+        },
+      });
+
+      (entity as unknown as Record<string, unknown>)._dcData = item;
+    }
+  }, [items]);
+
+  return null;
+}

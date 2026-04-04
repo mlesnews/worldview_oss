@@ -1,0 +1,94 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import * as Cesium from "cesium";
+import { useSyphonIntel } from "@/hooks/useSyphonIntel";
+import { useWorldViewStore } from "@/stores/worldview-store";
+
+interface Props {
+  viewer: Cesium.Viewer;
+}
+
+const LAYER_COLOR = "#44ff88";
+
+export default function SyphonIntelLayer({ viewer }: Props) {
+  const { items } = useSyphonIntel(true);
+  const dsRef = useRef<Cesium.CustomDataSource | null>(null);
+  const setSelectedEntity = useWorldViewStore((s) => s.setSelectedEntity);
+  const flyTo = useWorldViewStore((s) => s.flyTo);
+
+  useEffect(() => {
+    const ds = new Cesium.CustomDataSource("syphonIntel");
+    viewer.dataSources.add(ds);
+    dsRef.current = ds;
+
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    handler.setInputAction(
+      (click: { position: Cesium.Cartesian2 }) => {
+        const picked = viewer.scene.pick(click.position);
+        if (Cesium.defined(picked) && picked.id?._syphonData) {
+          const d = picked.id._syphonData;
+          setSelectedEntity({
+            id: d.id,
+            type: "news",
+            name: d.title,
+            details: {
+              Title: d.title,
+              Source: d.source,
+              Category: d.category,
+              Severity: d.severity,
+              Summary: d.summary,
+              URL: d.url,
+            },
+            lon: d.longitude,
+            lat: d.latitude,
+          });
+          flyTo(d.longitude, d.latitude, 500_000);
+        }
+      },
+      Cesium.ScreenSpaceEventType.LEFT_CLICK
+    );
+
+    return () => {
+      handler.destroy();
+      if (dsRef.current) {
+        viewer.dataSources.remove(dsRef.current, true);
+      }
+    };
+  }, [viewer, setSelectedEntity, flyTo]);
+
+  useEffect(() => {
+    const ds = dsRef.current;
+    if (!ds) return;
+    ds.entities.removeAll();
+
+    const color = Cesium.Color.fromCssColorString(LAYER_COLOR);
+
+    for (const item of items) {
+      const entity = ds.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(item.longitude, item.latitude),
+        point: {
+          pixelSize: 5 + item.severity,
+          color,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 1,
+        },
+        label: {
+          text: "SYPHON",
+          font: "9px monospace",
+          fillColor: color,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 2,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          pixelOffset: new Cesium.Cartesian2(10, -4),
+          scaleByDistance: new Cesium.NearFarScalar(1e4, 1, 5e6, 0),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0, 5e6),
+        },
+      });
+
+      (entity as unknown as Record<string, unknown>)._syphonData = item;
+    }
+  }, [items]);
+
+  return null;
+}

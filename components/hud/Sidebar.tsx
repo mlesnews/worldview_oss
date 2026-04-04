@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useWorldViewStore } from "@/stores/worldview-store";
-import type { LayerKey, DisasterCategory, FlightCategory, MilitaryCategory, MapStyle } from "@/types";
+import type { LayerKey, DisasterCategory, FlightCategory, MilitaryCategory, MilitaryAircraftCategory, MapStyle } from "@/types";
 
 interface LayerOption {
   key: LayerKey;
@@ -21,6 +21,20 @@ const LAYERS: LayerOption[] = [
   { key: "livestreams", label: "Live Streams", icon: "\u25B6" },
   { key: "news", label: "News Intel", icon: "\uD83D\uDCE1" },
   { key: "militaryActions", label: "Military Actions", icon: "\u2694", expandable: true },
+  { key: "dataCenters", label: "Data Centers", icon: "\u2302" },
+  { key: "whaleAlerts", label: "Whale Alerts", icon: "\uD83D\uDC33" },
+  { key: "polymarket", label: "Polymarket", icon: "\uD83C\uDFB2" },
+  { key: "syphonIntel", label: "SYPHON Intel", icon: "\uD83D\uDD0D" },
+  { key: "energyGrid", label: "Energy Grid", icon: "\u26A1" },
+  { key: "chipFabs", label: "Chip Fabs", icon: "\u2699" },
+  { key: "submarineCables", label: "Submarine Cables", icon: "\u223C" },
+  { key: "gpuSupplyChain", label: "GPU Supply", icon: "\uD83D\uDCBB" },
+  { key: "cryptoMining", label: "Crypto Mining", icon: "\u26CF" },
+  { key: "vcFunding", label: "VC Funding", icon: "\uD83D\uDCB0" },
+  { key: "monkeyWerx", label: "MonkeyWerx", icon: "\uD83D\uDEE9" },
+  { key: "militaryAircraft", label: "Mil Aircraft", icon: "\u2708", expandable: true },
+  { key: "luminaConfidence", label: "Confidence", icon: "\uD83C\uDFAF" },
+  { key: "customLayers", label: "Custom Layers", icon: "\u2605" },
 ];
 
 const FLIGHT_SUBTYPES: { key: FlightCategory; label: string }[] = [
@@ -51,6 +65,16 @@ const MILITARY_SUBTYPES: { key: MilitaryCategory; label: string }[] = [
   { key: "other", label: "Other" },
 ];
 
+const MILITARY_AIRCRAFT_SUBTYPES: { key: MilitaryAircraftCategory; label: string }[] = [
+  { key: "tanker", label: "Tankers" },
+  { key: "isr", label: "ISR" },
+  { key: "transport", label: "Transport" },
+  { key: "fighter", label: "Fighter" },
+  { key: "helo", label: "Helicopters" },
+  { key: "special", label: "Special Ops" },
+  { key: "other", label: "Other" },
+];
+
 export default function Sidebar() {
   const layers = useWorldViewStore((s) => s.layers);
   const toggleLayer = useWorldViewStore((s) => s.toggleLayer);
@@ -60,11 +84,14 @@ export default function Sidebar() {
   const toggleDisasterFilter = useWorldViewStore((s) => s.toggleDisasterFilter);
   const militaryFilters = useWorldViewStore((s) => s.militaryFilters);
   const toggleMilitaryFilter = useWorldViewStore((s) => s.toggleMilitaryFilter);
+  const militaryAircraftFilters = useWorldViewStore((s) => s.militaryAircraftFilters);
+  const toggleMilitaryAircraftFilter = useWorldViewStore((s) => s.toggleMilitaryAircraftFilter);
   const mapStyle = useWorldViewStore((s) => s.mapStyle);
   const setMapStyle = useWorldViewStore((s) => s.setMapStyle);
   const [flightsExpanded, setFlightsExpanded] = useState(false);
   const [disasterExpanded, setDisasterExpanded] = useState(false);
   const [militaryExpanded, setMilitaryExpanded] = useState(false);
+  const [milAircraftExpanded, setMilAircraftExpanded] = useState(false);
 
   return (
     <>
@@ -103,6 +130,7 @@ export default function Sidebar() {
           const isFlights = layer.key === "flights";
           const isDisasters = layer.key === "disasters";
           const isMilitary = layer.key === "militaryActions";
+          const isMilAircraft = layer.key === "militaryAircraft";
           const hasExpand = layer.expandable && active;
 
           return (
@@ -124,6 +152,7 @@ export default function Sidebar() {
                     if (isFlights && !active) setFlightsExpanded(true);
                     if (isDisasters && !active) setDisasterExpanded(true);
                     if (isMilitary && !active) setMilitaryExpanded(true);
+                    if (isMilAircraft && !active) setMilAircraftExpanded(true);
                   }}
                   className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
                 >
@@ -136,10 +165,11 @@ export default function Sidebar() {
                       if (isFlights) setFlightsExpanded(!flightsExpanded);
                       if (isDisasters) setDisasterExpanded(!disasterExpanded);
                       if (isMilitary) setMilitaryExpanded(!militaryExpanded);
+                      if (isMilAircraft) setMilAircraftExpanded(!milAircraftExpanded);
                     }}
                     className="ml-auto text-[9px] text-green-600 hover:text-green-400 cursor-pointer"
                   >
-                    {(isFlights && flightsExpanded) || (isDisasters && disasterExpanded) || (isMilitary && militaryExpanded)
+                    {(isFlights && flightsExpanded) || (isDisasters && disasterExpanded) || (isMilitary && militaryExpanded) || (isMilAircraft && milAircraftExpanded)
                       ? "[-]"
                       : "[+]"}
                   </button>
@@ -248,6 +278,40 @@ export default function Sidebar() {
                         `}
                       >
                         {militaryFilters[sub.key] ? "\u2713" : ""}
+                      </span>
+                      <span>{sub.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Military Aircraft sub-filters */}
+              {isMilAircraft && active && milAircraftExpanded && (
+                <div className="ml-6 mt-0.5 flex flex-col gap-0.5">
+                  {MILITARY_AIRCRAFT_SUBTYPES.map((sub) => (
+                    <button
+                      key={sub.key}
+                      onClick={() => toggleMilitaryAircraftFilter(sub.key)}
+                      className={`
+                        flex items-center gap-1.5 px-2 py-0.5 rounded-sm font-mono text-[9px] tracking-wide
+                        transition-all cursor-pointer
+                        ${
+                          militaryAircraftFilters[sub.key]
+                            ? "text-green-400/80"
+                            : "text-green-800/40"
+                        }
+                      `}
+                    >
+                      <span
+                        className={`w-2.5 h-2.5 border rounded-sm flex items-center justify-center text-[7px]
+                          ${
+                            militaryAircraftFilters[sub.key]
+                              ? "border-green-500/50 bg-green-900/30 text-green-400"
+                              : "border-green-900/30"
+                          }
+                        `}
+                      >
+                        {militaryAircraftFilters[sub.key] ? "\u2713" : ""}
                       </span>
                       <span>{sub.label}</span>
                     </button>

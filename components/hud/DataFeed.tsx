@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useWorldViewStore } from "@/stores/worldview-store";
-import type { EntityInfo, DisasterCategory, MilitaryCategory } from "@/types";
+import type { EntityInfo, DisasterCategory, MilitaryCategory, WhaleAlert, PolymarketPrediction, SyphonEvent, VcFundingEvent } from "@/types";
 
 const DISASTER_COLORS: Record<DisasterCategory, string> = {
   earthquakes: "#ff6644",
@@ -41,6 +41,10 @@ export default function DataFeed() {
   const liveStreams = useWorldViewStore((s) => s.liveStreams);
   const disasterEvents = useWorldViewStore((s) => s.disasterEvents);
   const militaryActions = useWorldViewStore((s) => s.militaryActions);
+  const whaleAlerts = useWorldViewStore((s) => s.whaleAlerts);
+  const polymarketPredictions = useWorldViewStore((s) => s.polymarketPredictions);
+  const syphonEvents = useWorldViewStore((s) => s.syphonEvents);
+  const vcFundingEvents = useWorldViewStore((s) => s.vcFundingEvents);
   const setSelectedEntity = useWorldViewStore((s) => s.setSelectedEntity);
   const flyTo = useWorldViewStore((s) => s.flyTo);
   const openMediaModal = useWorldViewStore((s) => s.openMediaModal);
@@ -151,6 +155,114 @@ export default function DataFeed() {
           },
           lat: m.latitude,
           lon: m.longitude,
+        },
+      })),
+    });
+  }
+
+  // Whale Alerts
+  if (layers.whaleAlerts && whaleAlerts.length > 0) {
+    groups.push({
+      key: "whaleAlerts",
+      label: "WHALE ALERTS",
+      color: "#00ccff",
+      items: whaleAlerts.map((w) => ({
+        id: w.id,
+        title: `${w.symbol} ${(w.amountUsd / 1_000_000).toFixed(1)}M USD`,
+        meta: `${w.blockchain} · ${w.from.slice(0, 8)}→${w.to.slice(0, 8)}`,
+        entity: {
+          id: w.id,
+          type: "news" as const,
+          name: `${w.symbol} whale transfer`,
+          details: {
+            Amount: `$${w.amountUsd.toLocaleString()}`,
+            Blockchain: w.blockchain,
+            From: w.from,
+            To: w.to,
+          },
+          lat: w.latitude,
+          lon: w.longitude,
+        },
+      })),
+    });
+  }
+
+  // Polymarket
+  if (layers.polymarket && polymarketPredictions.length > 0) {
+    groups.push({
+      key: "polymarket",
+      label: "PREDICTIONS",
+      color: "#ff88ff",
+      items: polymarketPredictions.map((p) => ({
+        id: p.id,
+        title: p.question,
+        meta: `${(p.probability * 100).toFixed(0)}% · $${(p.volume / 1000).toFixed(0)}K vol`,
+        entity: {
+          id: p.id,
+          type: "news" as const,
+          name: p.question,
+          details: {
+            Probability: `${(p.probability * 100).toFixed(1)}%`,
+            Volume: `$${p.volume.toLocaleString()}`,
+            Category: p.category,
+            Ends: p.endDate,
+          },
+          lat: p.latitude,
+          lon: p.longitude,
+        },
+      })),
+    });
+  }
+
+  // SYPHON Intel
+  if (layers.syphonIntel && syphonEvents.length > 0) {
+    groups.push({
+      key: "syphonIntel",
+      label: "SYPHON INTEL",
+      color: "#44ff88",
+      items: syphonEvents.map((s) => ({
+        id: s.id,
+        title: s.title,
+        meta: `${s.source} · sev:${s.severity} · ${s.category}`,
+        entity: {
+          id: s.id,
+          type: "news" as const,
+          name: s.title,
+          details: {
+            Source: s.source,
+            Category: s.category,
+            Severity: s.severity,
+            Summary: s.summary,
+          },
+          lat: s.latitude,
+          lon: s.longitude,
+        },
+      })),
+    });
+  }
+
+  // VC Funding
+  if (layers.vcFunding && vcFundingEvents.length > 0) {
+    groups.push({
+      key: "vcFunding",
+      label: "VC FUNDING",
+      color: "#88ff44",
+      items: vcFundingEvents.map((v) => ({
+        id: v.id,
+        title: `${v.company} — $${(v.amountUsd / 1_000_000).toFixed(1)}M ${v.round}`,
+        meta: `${v.investors} · ${v.sector}`,
+        entity: {
+          id: v.id,
+          type: "news" as const,
+          name: `${v.company} funding`,
+          details: {
+            Amount: `$${v.amountUsd.toLocaleString()}`,
+            Round: v.round,
+            Investors: v.investors,
+            Sector: v.sector,
+          },
+          lat: v.latitude,
+          lon: v.longitude,
         },
       })),
     });

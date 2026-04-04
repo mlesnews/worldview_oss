@@ -13,6 +13,7 @@ const VIEW_MODES: { key: ViewMode; label: string }[] = [
 export default function BottomBar() {
   const viewMode = useWorldViewStore((s) => s.viewMode);
   const setViewMode = useWorldViewStore((s) => s.setViewMode);
+  const activateTradingView = useWorldViewStore((s) => s.activateTradingView);
   const layers = useWorldViewStore((s) => s.layers);
 
   const activeCount = Object.values(layers).filter(Boolean).length;
@@ -21,7 +22,7 @@ export default function BottomBar() {
     <div className="panel-section border-t border-green-900/20 flex-shrink-0">
       {/* View Mode Selector */}
       <div className="panel-label">RENDER MODE</div>
-      <div className="grid grid-cols-4 gap-0.5 mb-3">
+      <div className="grid grid-cols-5 gap-0.5 mb-3">
         {VIEW_MODES.map((mode) => (
           <button
             key={mode.key}
@@ -39,6 +40,20 @@ export default function BottomBar() {
             {mode.label}
           </button>
         ))}
+        <button
+          onClick={() => activateTradingView()}
+          className={`
+            px-1.5 py-1 font-mono text-[10px] tracking-wider border cursor-pointer
+            transition-all duration-150 text-center
+            ${
+              viewMode === "trading"
+                ? "bg-amber-900/40 border-amber-500/60 text-amber-400 shadow-[0_0_8px_rgba(255,191,0,0.2)]"
+                : "bg-black/40 border-amber-900/20 text-amber-700/40 hover:text-amber-500/60 hover:border-amber-800/40"
+            }
+          `}
+        >
+          TRD
+        </button>
       </div>
 
       {/* Status */}
