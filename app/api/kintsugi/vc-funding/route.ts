@@ -16,5 +16,10 @@ const FUNDING_EVENTS: VcFundingEvent[] = [
 ];
 
 export async function GET() {
-  return NextResponse.json(FUNDING_EVENTS);
+  try {
+    return NextResponse.json(FUNDING_EVENTS);
+  } catch (error) {
+    console.error("VC funding API error:", error);
+    return NextResponse.json([], { status: 200 });
+  }
 }
