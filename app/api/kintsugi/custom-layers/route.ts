@@ -21,6 +21,20 @@ async function saveLayers(layers: CustomLayer[]): Promise<void> {
 
 export async function GET() {
   try {
+    // Try Lumina Kintsugi bridge first
+    try {
+      const luminaRes = await fetch("http://localhost:8001/api/kintsugi/custom-layers", {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (luminaRes.ok) {
+        const luminaData = await luminaRes.json();
+        if (Array.isArray(luminaData) && luminaData.length > 0) {
+          return NextResponse.json(luminaData);
+        }
+      }
+    } catch {
+      // Lumina unavailable, use local file
+    }
     const layers = await loadLayers();
     return NextResponse.json(layers);
   } catch (error) {

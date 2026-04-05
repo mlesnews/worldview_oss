@@ -151,7 +151,7 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
   layers: {
     flights: false,
     satellites: false,
-    disasters: false,
+    disasters: true,
     asteroids: false,
     weather: false,
     cameras: false,
@@ -169,7 +169,7 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
     cryptoMining: false,
     vcFunding: false,
     monkeyWerx: false,
-    militaryAircraft: false,
+    militaryAircraft: true,
     luminaConfidence: false,
     customLayers: false,
   },

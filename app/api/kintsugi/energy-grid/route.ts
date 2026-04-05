@@ -40,6 +40,23 @@ export async function GET() {
       return NextResponse.json(cached);
     }
 
+    // Try Lumina Kintsugi bridge first
+    try {
+      const luminaRes = await fetch("http://localhost:8001/api/kintsugi/energy-grid", {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (luminaRes.ok) {
+        const luminaData = await luminaRes.json();
+        if (Array.isArray(luminaData) && luminaData.length > 0) {
+          cached = luminaData;
+          lastFetch = now;
+          return NextResponse.json(cached);
+        }
+      }
+    } catch {
+      // Lumina unavailable, try EIA directly
+    }
+
     try {
       const params = new URLSearchParams({
         frequency: "hourly",

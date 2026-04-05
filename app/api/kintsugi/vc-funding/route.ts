@@ -17,6 +17,20 @@ const FUNDING_EVENTS: VcFundingEvent[] = [
 
 export async function GET() {
   try {
+    // Try Lumina Kintsugi bridge first (may have enriched data from syphon)
+    try {
+      const luminaRes = await fetch("http://localhost:8001/api/kintsugi/vc-funding", {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (luminaRes.ok) {
+        const luminaData = await luminaRes.json();
+        if (Array.isArray(luminaData) && luminaData.length > 0) {
+          return NextResponse.json(luminaData);
+        }
+      }
+    } catch {
+      // Lumina unavailable, use static
+    }
     return NextResponse.json(FUNDING_EVENTS);
   } catch (error) {
     console.error("VC funding API error:", error);
