@@ -3,6 +3,7 @@ import { Ollama } from "ollama";
 // Preferred models in order of priority
 // lfm2 preferred — no thinking mode overhead, fast structured output
 const PREFERRED_MODELS = [
+  "gemma-4-e4b-it-Q4_K_M.gguf", // Lumina llama.cpp — Gemma 4 E4B on RTX 5090
   "sam860/lfm2:8b",  // 5.9GB — fits fully in 12GB VRAM, fast on GPU
   "lfm2:24b",        // Best quality, needs 16GB+ VRAM
   "lfm2:24b-a2b",    // MoE variant, needs 16GB+ VRAM
