@@ -171,7 +171,7 @@ export const useWorldViewStore = create<WorldViewStore>((set, get) => ({
     monkeyWerx: false,
     militaryAircraft: true,
     luminaConfidence: true,
-    customLayers: false,
+    customLayers: true,
   },
   toggleLayer: (layer) =>
     set((state) => ({
